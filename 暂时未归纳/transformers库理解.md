@@ -461,7 +461,121 @@ processor.apply_chat_template(conversation, tokenize=True, add_generation_prompt
 第7步：tokenizer.decode(output_ids) → "这只猫看起来是一只橘猫..."
 ```
 
-### 10.3 三个关键对象的分工
+### 10.3 固定指令模板：当 conversation 不再自由
+
+10.1 和 10.2 展示的是最灵活的 conversation 形式——用户自由组织对话。但许多工业级 VLM 实际落地时，**用户的自由文本被替换为写死在代码里的固定指令模板**。模型在训练时就用这些固定句式，推理时也必须原样输入，没有任何自由度。
+
+#### 核心思想
+
+```
+通用对话模型（GPT-4V / LLaVA）：
+  用户任意输入 → conversation → apply_chat_template → tokenize → model
+
+任务专用模型（Eagle / LocateAnything）：
+  任务类型 + 类别参数 → 固定模板函数 → prompt 字符串 → tokenize → model
+                              ↑
+                        用户改不了这句式
+```
+
+这类模型本质上是 "prompt-as-code"：每个任务对应一个写死在 `worker.py` 里的模板函数，用户只提供参数（如类别名、短语），而不是自己写 prompt。
+
+#### Box 模式任务（输出完整 bbox）
+
+以 LocateAnything 为例，以下是写死在 `locateanything_worker.py` 里的模板：
+
+```python
+# 目标检测 / 文档布局分析
+def detect(image, categories):
+    cats = "</c>".join(categories)   # "person</c>car</c>bicycle"
+    prompt = f"Locate all the instances that matches the following description: {cats}."
+    # → "Locate all the instances that matches the following description: person</c>car</c>bicycle."
+
+# 指代表达定位（单个）
+def ground_single(image, phrase):
+    prompt = f"Locate a single instance that matches the following description: {phrase}."
+    # → "Locate a single instance that matches the following description: the red car."
+
+# 指代表达定位（多个）
+def ground_multi(image, phrase):
+    prompt = f"Locate all the instances that match the following description: {phrase}."
+
+# 文本定位
+def ground_text(image, phrase):
+    prompt = f"Please locate the text referred as {phrase}."
+
+# 场景文本检测
+def detect_text(image):
+    prompt = "Detect all the text in box format."
+
+# GUI 定位（box 输出）
+def ground_gui(image, phrase, output_type="box"):
+    prompt = f"Locate the region that matches the following description: {phrase}."
+
+# 视觉 prompt 检测（用图片作为类别条件）
+def detect_visual_prompt(image, visual_prompt):
+    prompt = "Detect all the objects in the image that belong to the category set: <visual_prompt>."
+```
+
+#### Point 模式任务（输出单点坐标）
+
+```python
+# GUI 定位（point 输出）
+def ground_gui(image, phrase, output_type="point"):
+    prompt = f"Point to: {phrase}."
+    # → "Point to: the search button."
+
+# 指向
+def point(image, phrase):
+    prompt = f"Point to: {phrase}."
+```
+
+#### 输出格式：特殊 Token 区分 Box 与 Point
+
+模型输出是带特殊 token 的纯文本，通过不同 token pattern 区分框和点：
+
+**Box 输出（4 坐标 = 矩形框）**：
+```
+<box><150><200><450><500></box>
+  ↑     ↑     ↑     ↑     ↑
+  │   x1=150 y1=200 x2=450 y2=500    (归一化到 0-1000)
+  │
+  └─ 6 个连续 token：box_start, coord_150, coord_200, coord_450, coord_500, box_end
+```
+模型一次 MTP（Multi-Token Prediction）并行预测这 6 个 token。
+
+**Point 输出（2 坐标 = 点）**：
+```
+<box><320><580></box>
+  ↑     ↑     ↑
+  │   x=320  y=580
+  │
+  └─ 4 个 token：box_start, coord_320, coord_580, box_end
+```
+
+**空框（无目标）**：
+```
+<box><none></box>
+```
+
+**类别引用（检测中的类别名）**：
+```
+<ref>person</ref>
+```
+
+#### 与通用 conversation 的本质区别
+
+| | 通用对话（10.1 / 10.2） | 固定指令模板（10.3） |
+|---|---|---|
+| prompt 来源 | 用户自由编写 conversation | 代码里写死的模板函数 |
+| 用户可控范围 | 全部内容 | 只填参数（类别名、短语） |
+| 模型训练方式 | 海量通用对话数据 | 仅用固定句式训练 |
+| 输出格式 | 自由文本 | 固定格式（`<box>...</box>` 等） |
+| 灵活性 | 高 | 低，但任务精度高 |
+| 典型场景 | 聊天、通用问答 | 目标检测、grounding、GUI定位 |
+
+**本质**：前面讲的 `conversation = [{role: "user", content: [{type: "image"}, {type: "text", "这是什么动物？"}]}]` 那种自由写法，在这种任务专用模型上**完全不可行**——模型只在极窄的 prompt 分布上训练过，换一种问法就会崩。
+
+### 10.4 三个关键对象的分工
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -479,7 +593,7 @@ processor.apply_chat_template(conversation, tokenize=True, add_generation_prompt
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 10.4 关键代码位置
+### 10.5 关键代码位置
 
 | 步骤 | 代码位置 |
 |------|----------|
@@ -494,7 +608,7 @@ processor.apply_chat_template(conversation, tokenize=True, add_generation_prompt
 | next_token 选择（贪心/采样） | `generation/utils.py:2779-2785` |
 | EOS 检测 | `generation/utils.py:2788-2797` |
 
-### 10.5 纯文本 vs 多模态 流程对比
+### 10.6 纯文本 vs 多模态 流程对比
 
 ```
 纯文本：
