@@ -317,318 +317,198 @@ AutoModel.from_pretrained("bert-base-uncased")
 
 **两条平行的 from_pretrained 加载链路，最后在 Pipeline 汇合。**
 
-## 十、Chat Template 完整使用链路
 
-### 10.1 纯文本对话范例
+## 十一、Auto 类注册体系（以 Qwen3-VL 为例）
 
-以 SmolLM2（类似 LLaMA 的 ChatML 格式）为例：
+### 11.1 六个 Auto 注册文件，各管各的
 
-**输入：**
-```python
-conversation = [
-    {"role": "system", "content": "你是一个有用的助手"},
-    {"role": "user", "content": "什么是机器学习？"},
-]
+每个 auto 文件维护一张**硬编码的映射表**，把 `model_type` 映射到具体类名。不是自动扫描 models 目录，是**人手一行一行写的**。
 
-tokenizer.apply_chat_template(
-    conversation,
-    tokenize=True,
-    add_generation_prompt=True  # ← 末尾追加 assistant 开头，提示模型开始回答
+| auto 文件 | 映射表名 | 管什么 | Qwen3-VL 注册了什么 |
+|-----------|---------|--------|---------------------|
+| `configuration_auto.py` | `CONFIG_MAPPING_NAMES` | 模型配置类 | `"qwen3_vl" → "Qwen3VLConfig"` |
+| `modeling_auto.py` | `MODEL_FOR_IMAGE_TEXT_TO_TEXT_MAPPING_NAMES` 等 | 模型类 | `"qwen3_vl" → "Qwen3VLForConditionalGeneration"` |
+| `tokenization_auto.py` | `TOKENIZER_MAPPING_NAMES` | 分词器类 | `"qwen3_vl" → "Qwen2Tokenizer"` |
+| `image_processing_auto.py` | `IMAGE_PROCESSOR_MAPPING_NAMES` | 图像处理器类 | `"qwen3_vl" → "Qwen2VLImageProcessor"` |
+| `video_processing_auto.py` | `VIDEO_PROCESSOR_MAPPING_NAMES` | 视频处理器类 | `"qwen3_vl" → "Qwen3VLVideoProcessor"` |
+| `processing_auto.py` | `PROCESSOR_MAPPING_NAMES` | 组合处理器类 | `"qwen3_vl" → "Qwen3VLProcessor"` |
+
+### 11.2 推理时完整加载链路
+
+```
+用户调用:
+  processor = AutoProcessor.from_pretrained("Qwen/Qwen3-VL-7B")
+  model = AutoModelForImageTextToText.from_pretrained("Qwen/Qwen3-VL-7B")
+
+        ┌──────────────────────────────────────────────────────────┐
+        │                  下载文件夹里的文件                        │
+        │  config.json                     → model_type="qwen3_vl" │
+        │  tokenizer_config.json            → tokenizer 配置        │
+        │  preprocessor_config.json         → image processor 配置  │
+        │  video_preprocessor_config.json   → video processor 配置  │
+        │  model.safetensors                → 权重                  │
+        └──────────────────────────────────────────────────────────┘
+                            │
+        ┌───────────────────┼───────────────────┐
+        ▼                   ▼                   ▼
+
+AutoProcessor.from_pretrained()        AutoModel.from_pretrained()
+  │                                      │
+  ├─ processing_auto.py 查表 →          ├─ configuration_auto.py 查表 →
+  │  "qwen3_vl" → Qwen3VLProcessor      │  "qwen3_vl" → Qwen3VLConfig
+  │                                      │
+  ├─ 内部自动加载:                       ├─ modeling_auto.py 查表 →
+  │  ├─ AutoTokenizer:                  │  Qwen3VLConfig → Qwen3VLForConditionalGeneration
+  │  │    tokenization_auto.py 查表 →   │
+  │  │    "qwen3_vl" → Qwen2Tokenizer   ├─ PreTrainedModel.from_pretrained():
+  │  │    读 tokenizer_config.json      │    用 config 构建模型结构
+  │  │                                   │    加载 model.safetensors 权重
+  │  ├─ AutoImageProcessor:
+  │  │    image_processing_auto.py 查表→
+  │  │    "qwen3_vl" → Qwen2VLImageProcessor
+  │  │    读 preprocessor_config.json
+  │  │
+  │  └─ AutoVideoProcessor:
+  │       video_processing_auto.py 查表→
+  │       "qwen3_vl" → Qwen3VLVideoProcessor
+  │       读 video_preprocessor_config.json
+  │
+  ▼
+Qwen3VLProcessor(                      Qwen3VLForConditionalGeneration(config)
+    tokenizer=Qwen2Tokenizer,              ├── vision_model   ← Qwen3VLVisionConfig 控制
+    image_processor=Qwen2VLImageProcessor, ├── language_model  ← Qwen3VLTextConfig 控制
+    video_processor=Qwen3VLVideoProcessor, └── aligner         ← 投影层
 )
 ```
 
-**模板（tokenizer.chat_template，一段 Jinja2 字符串）：**
-```jinja2
-{% for message in messages %}
-{% if message['role'] == 'system' %}
-<|im_start|>system
-{{ message['content'] }}<|im_end|>
-{% elif message['role'] == 'user' %}
-<|im_start|>user
-{{ message['content'] }}<|im_end|>
-{% elif message['role'] == 'assistant' %}
-<|im_start|>assistant
-{{ message['content'] }}<|im_end|>
-{% endif %}
-{% endfor %}
-{% if add_generation_prompt %}<|im_start|>assistant{% endif %}
-```
+### 11.3 配置也是分开读的，不是只有一个 config.json
 
-**模板渲染后（Jinja2 → 字符串）：**
-```
-<|im_start|>system
-你是一个有用的助手<|im_end|>
-<|im_start|>user
-什么是机器学习？<|im_end|>
-<|im_start|>assistant
-```
+每个组件有独立配置文件，各自通过各自的 auto 类加载：
 
-**→ Tokenize（tokenizer.__call__）：**
-```
-[1, 1234, 567, ..., 456, 789, ..., 32000, 987, ...]
-  ↑  bos    system内容    eos   user内容     eos   assistant开头
-```
+| 组件 | 读的配置文件 | auto 类 |
+|------|-------------|---------|
+| 模型 | `config.json` | `AutoConfig` → `configuration_auto.py` |
+| 分词器 | `tokenizer_config.json` + `vocab.json` + `tokenizer.json` | `AutoTokenizer` → `tokenization_auto.py` |
+| 图像处理器 | `preprocessor_config.json` | `AutoImageProcessor` → `image_processing_auto.py` |
+| 视频处理器 | `video_preprocessor_config.json` | `AutoVideoProcessor` → `video_processing_auto.py` |
 
-**五步流程：**
+> **关键**：不是所有配置都在 `config.json` 里。模型配置（多少层、多宽）在 `config.json`，图像预处理参数（resize 尺寸、归一化参数）在 `preprocessor_config.json`，各读各的。
 
-```
-第1步：对话 dict → apply_chat_template(conversation)
-        │
-        ▼  把 conversation 和 special_tokens_map 传入 Jinja2 模板
-        │  模板里的 {{ bos_token }} {{ eos_token }} 自动展开
-        │
-第2步：渲染字符串（特殊 token 已插入）
-        "<|im_start|>system\n你是助手<|im_end|>\n<|im_start|>user\n什么是ML？<|im_end|>\n<|im_start|>assistant"
-        │
-        ▼  self(rendered_chat, add_special_tokens=False)
-        │  注意: add_special_tokens=False，因为模板里已经加了
-        │
-第3步：分词 → token ids
-        [BOS, system_tokens, EOS, user_tokens, EOS, assistant_start]
-        │
-        ▼  model.generate(input_ids, ...)
-        │
-第4步：逐 token 自回归解码（while 循环）
-        """
-        while 还有未完成的序列:
-            ① model(input_ids) → logits (batch, seq_len, vocab_size)
-            ② 取 logits[:, -1, :] → 最后一个位置的词表概率分布
-            ③ softmax → 采样/贪心取 next_token
-            ④ input_ids = concat([input_ids, next_token])
-            ⑤ 如果 next_token == eos_token_id → 标记该序列已完成
-            ⑥ 如果所有序列都完成 → break
-        """
-        │
-        ▼
-第5步：输出结果 + decode
-        [BOS, ..., assistant_tokens, EOS]  → tokenizer.decode → "机器学习是..."
-```
+### 11.4 AutoModel.from_pretrained 的分发机制
 
-### 10.2 多模态对话范例（文本+图片）
-
-以 LLaVA 为例，输入和纯文本不同——content 是列表，包含文本块和图片块：
-
-**输入：**
-```python
-conversation = [
-    {"role": "user",
-     "content": [
-         {"type": "image", "url": "cat.jpg"},        # ← 图片
-         {"type": "text", "text": "这是什么动物？"}     # ← 文本
-     ]},
-]
-
-processor.apply_chat_template(conversation, tokenize=True, add_generation_prompt=True)
-```
-
-**完整流程：**
-
-```
-第1步：模板渲染（纯文本部分）
-        先把图片从 content 中提取出来，文本和占位符 <image> 留给 Jinja2 模板
-        渲染后：
-        "<|im_start|>user\n<image>\n这是什么动物？<|im_end|>\n<|im_start|>assistant"
-        │
-        ▼
-第2步：图片编码
-        提取出的图片 → image_processor(cat.jpg) → pixel_values tensor (1, 3, 336, 336)
-        │
-        ▼
-第3步：占位符替换（LLaVA 核心代码，processing_llava.py:118-120）
-        1个 <image> → N个 <image><image>...<image>
-        N = (height // patch_size) * (width // patch_size) + num_additional_image_tokens
-        例如 336×336, patch=14 → N = (24*24) + 0 = 576 个 <image> token
-        │
-        替换后文本：
-        "<|im_start|>user\n<image><image>...(×576)...<image>\n这是什么动物？<|im_end|>\n<|im_start|>assistant"
-        │
-        ▼
-第4步：分词 → input_ids（576个image_token_id + 其他文本token）
-        │
-        ▼
-第5步：Processor.__call__ 返回 BatchFeature
-        {
-            "input_ids":     [BOS, user_..., image×576, ..., assistant_start],  ← 1D token序列
-            "pixel_values":  tensor(1, 3, 336, 336),                            ← 图片pixel值
-            "attention_mask": [1, 1, 1, 1, ..., 1],
-        }
-        │
-        ▼
-第6步：model.generate(**batch_feature) → 自回归解码（同10.1第4步）
-        模型内部会把 576个image token位置的embedding替换为vision encoder的输出
-        │
-        ▼
-第7步：tokenizer.decode(output_ids) → "这只猫看起来是一只橘猫..."
-```
-
-### 10.3 固定指令模板：当 conversation 不再自由
-
-10.1 和 10.2 展示的是最灵活的 conversation 形式——用户自由组织对话。但许多工业级 VLM 实际落地时，**用户的自由文本被替换为写死在代码里的固定指令模板**。模型在训练时就用这些固定句式，推理时也必须原样输入，没有任何自由度。
-
-#### 核心思想
-
-```
-通用对话模型（GPT-4V / LLaVA）：
-  用户任意输入 → conversation → apply_chat_template → tokenize → model
-
-任务专用模型（Eagle / LocateAnything）：
-  任务类型 + 类别参数 → 固定模板函数 → prompt 字符串 → tokenize → model
-                              ↑
-                        用户改不了这句式
-```
-
-这类模型本质上是 "prompt-as-code"：每个任务对应一个写死在 `worker.py` 里的模板函数，用户只提供参数（如类别名、短语），而不是自己写 prompt。
-
-#### Box 模式任务（输出完整 bbox）
-
-以 LocateAnything 为例，以下是写死在 `locateanything_worker.py` 里的模板：
+`AutoModel` 继承 `_BaseAutoModelClass`（`auto_factory.py:195`），所有 Auto 模型类的 `from_pretrained()` 只有一份代码，在 `_BaseAutoModelClass` 里：
 
 ```python
-# 目标检测 / 文档布局分析
-def detect(image, categories):
-    cats = "</c>".join(categories)   # "person</c>car</c>bicycle"
-    prompt = f"Locate all the instances that matches the following description: {cats}."
-    # → "Locate all the instances that matches the following description: person</c>car</c>bicycle."
+# modeling_auto.py:1957
+class AutoModel(_BaseAutoModelClass):
+    _model_mapping = MODEL_MAPPING     # 只指定映射表，from_pretrained 继承自基类
 
-# 指代表达定位（单个）
-def ground_single(image, phrase):
-    prompt = f"Locate a single instance that matches the following description: {phrase}."
-    # → "Locate a single instance that matches the following description: the red car."
+# auto_factory.py:384 — 核心路由
+model_class = _get_model_class(config, cls._model_mapping)
+return model_class.from_pretrained(...)   # 调目标类的 from_pretrained
 
-# 指代表达定位（多个）
-def ground_multi(image, phrase):
-    prompt = f"Locate all the instances that match the following description: {phrase}."
+# auto_factory.py:180 — 查映射表
+def _get_model_class(config, model_mapping):
+    supported_models = model_mapping[type(config)]   # 触发 _LazyAutoMapping.__getitem__
+    return supported_models
 
-# 文本定位
-def ground_text(image, phrase):
-    prompt = f"Please locate the text referred as {phrase}."
-
-# 场景文本检测
-def detect_text(image):
-    prompt = "Detect all the text in box format."
-
-# GUI 定位（box 输出）
-def ground_gui(image, phrase, output_type="box"):
-    prompt = f"Locate the region that matches the following description: {phrase}."
-
-# 视觉 prompt 检测（用图片作为类别条件）
-def detect_visual_prompt(image, visual_prompt):
-    prompt = "Detect all the objects in the image that belong to the category set: <visual_prompt>."
+# auto_factory.py:597 — 懒加载
+def _load_attr_from_module(self, model_type, attr):
+    module = importlib.import_module(f"transformers.models.{model_type}")
+    return getattr(module, attr)    # 从模块里取出类
 ```
 
-#### Point 模式任务（输出单点坐标）
+**两步走**：
+1. `_BaseAutoModelClass.from_pretrained()` → 路由分发（Auto 自己做的）
+2. 目标类的 `from_pretrained()` → 真正加载权重（继承自 `PreTrainedModel`）
 
-```python
-# GUI 定位（point 输出）
-def ground_gui(image, phrase, output_type="point"):
-    prompt = f"Point to: {phrase}."
-    # → "Point to: the search button."
+### 11.5 Qwen3-VL 用到的全部类
 
-# 指向
-def point(image, phrase):
-    prompt = f"Point to: {phrase}."
+Qwen3-VL 一共用到 13 个类，自己只写了 8 个，5 个复用别人的：
+
+```
+自己写的（在 modular_qwen3_vl.py 中定义，make fix-repo 生成到各个文件）:
+  ├── Qwen3VLConfig              ← 总配置（包含 vision_config + text_config）
+  ├── Qwen3VLTextConfig          ← 文本分支配置（hidden_size, num_layers...）
+  ├── Qwen3VLVisionConfig        ← 视觉分支配置（patch_size, num_heads...）
+  ├── Qwen3VLVisionModel         ← 视觉编码器
+  ├── Qwen3VLTextModel           ← 纯文本模型
+  ├── Qwen3VLModel               ← 文本+视觉拼接模型
+  ├── Qwen3VLForConditionalGeneration  ← 最终使用的完整模型（forward + loss）
+  └── Qwen3VLProcessor           ← 处理器壳（包装 tokenizer + image_processor + video_processor）
+
+借用的:
+  ├── 向 qwen2_vl 借: Qwen2VLImageProcessor, Qwen2VLImageProcessorPil
+  ├── 向 qwen2 借:   Qwen2Tokenizer
+  └── 自己写:        Qwen3VLVideoProcessor
 ```
 
-#### 输出格式：特殊 Token 区分 Box 与 Point
+### 11.6 `_LazyAutoMapping` 是所有 auto 的共享基础设施
 
-模型输出是带特殊 token 的纯文本，通过不同 token pattern 区分框和点：
+`auto_factory.py` 里有两个东西：
 
-**Box 输出（4 坐标 = 矩形框）**：
+| 东西 | 谁在用 |
+|------|--------|
+| `_LazyAutoMapping` (L560) | **所有 auto 都用** — modeling、image、video、tokenization、processing |
+| `_BaseAutoModelClass` (L195) | **只有模型用** — `AutoModel`、`AutoModelForCausalLM` 等继承它 |
+
+`_LazyAutoMapping` 的原理：存的是类名字符串（如 `"Qwen2Tokenizer"`），第一次访问时通过 `importlib.import_module` + `getattr` 动态加载成真正的 Python 类，避免启动时 import 全部模块。
+
+## 十二、modular 文件与代码生成
+
+### 12.1 modular 是"源文件"，生成文件是"副本"
+
+transformers 有两套代码复用机制：
+
+| 机制 | 方式 | 时期 |
+|------|------|------|
+| `# Copied from` | 每个模型分开写文件，用注释标记复用 | 老方式 |
+| `modular_xxx.py` | 一个文件包含所有类，通过继承复用，自动拆分生成独立文件 | **新方式** |
+
+### 12.2 modular 工作流
+
 ```
-<box><150><200><450><500></box>
-  ↑     ↑     ↑     ↑     ↑
-  │   x1=150 y1=200 x2=450 y2=500    (归一化到 0-1000)
+modular_qwen3_vl.py（手动维护，只写与别人不同的部分）
   │
-  └─ 6 个连续 token：box_start, coord_150, coord_200, coord_450, coord_500, box_end
-```
-模型一次 MTP（Multi-Token Prediction）并行预测这 6 个 token。
-
-**Point 输出（2 坐标 = 点）**：
-```
-<box><320><580></box>
-  ↑     ↑     ↑
-  │   x=320  y=580
+  │  make fix-repo
   │
-  └─ 4 个 token：box_start, coord_320, coord_580, box_end
+  ├──→ configuration_qwen3_vl.py   (Qwen3VLConfig, Qwen3VLTextConfig, Qwen3VLVisionConfig)
+  ├──→ modeling_qwen3_vl.py        (Qwen3VLForConditionalGeneration, Qwen3VLModel, ...)
+  ├──→ processing_qwen3_vl.py      (Qwen3VLProcessor)
+  └──→ image_processing_qwen3_vl.py (如果有的话)
 ```
 
-**空框（无目标）**：
+生成的每个文件开头都有警告注释：
 ```
-<box><none></box>
-```
-
-**类别引用（检测中的类别名）**：
-```
-<ref>person</ref>
+🚨 This file was automatically generated from modular_qwen3_vl.py.
+   Do NOT edit this file manually ...
 ```
 
-#### 与通用 conversation 的本质区别
+### 12.3 modular 运行时不被使用
 
-| | 通用对话（10.1 / 10.2） | 固定指令模板（10.3） |
-|---|---|---|
-| prompt 来源 | 用户自由编写 conversation | 代码里写死的模板函数 |
-| 用户可控范围 | 全部内容 | 只填参数（类别名、短语） |
-| 模型训练方式 | 海量通用对话数据 | 仅用固定句式训练 |
-| 输出格式 | 自由文本 | 固定格式（`<box>...</box>` 等） |
-| 灵活性 | 高 | 低，但任务精度高 |
-| 典型场景 | 聊天、通用问答 | 目标检测、grounding、GUI定位 |
+- **开发时**：人在 `modular_qwen3_vl.py` 上改，`make fix-repo` 生成独立文件
+- **运行时**：auto 类 import 的是生成的 `configuration_qwen3_vl.py`、`modeling_qwen3_vl.py` 等，**不碰 modular 文件**
 
-**本质**：前面讲的 `conversation = [{role: "user", content: [{type: "image"}, {type: "text", "这是什么动物？"}]}]` 那种自由写法，在这种任务专用模型上**完全不可行**——模型只在极窄的 prompt 分布上训练过，换一种问法就会崩。
+### 12.4 modular 和 auto 注册是两条独立的线
 
-### 10.4 三个关键对象的分工
+`make fix-repo` 只负责从 modular 生成代码文件，**不会**自动注册 auto 映射。auto 映射是另一个独立步骤，需要人在 6 个 auto 文件中手动添加映射行。
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  tokenizer / processor  ───  "前处理工程师"                       │
-│  负责：对话→模板渲染→特殊token插入→分词→图像编码→占位符替换         │
-│  输出：{input_ids, pixel_values, attention_mask}                 │
-├─────────────────────────────────────────────────────────────────┤
-│  model                   ───  "推理引擎"                          │
-│  负责：前向传播 → logits → 自回归采样/贪心 → 逐token输出            │
-│  输出：[BOS, ..., generated_tokens, EOS]                         │
-├─────────────────────────────────────────────────────────────────┤
-│  tokenizer.decode        ───  "后处理翻译官"                      │
-│  负责：token ids → 人类可读文本                                    │
-│  输出："机器学习是..."                                            │
-└─────────────────────────────────────────────────────────────────┘
+加一个新模型需要同时做两件事：
+1. 写 modular 文件（或直接用旧方式写独立文件）
+2. 在 6 个 auto 文件中各加一行映射
+
+### 12.5 为什么 Processor 不需要 import 具体 tokenizer 类
+
+```python
+class Qwen3VLProcessor(Qwen2VLProcessor):
+    def __init__(self, image_processor=None, tokenizer=None, ...):
+        super().__init__(image_processor, tokenizer, ...)
+        # tokenizer 从外部传入，Processor 不关心它是 Qwen2Tokenizer 还是 LlamaTokenizer
 ```
 
-### 10.5 关键代码位置
+Processor 只依赖抽象接口（能 `.encode()` `.decode()` 的对象），不依赖具体类。谁是谁由 auto 系统在运行时决定。
 
-| 步骤 | 代码位置 |
-|------|----------|
-| apply_chat_template 入口 | `tokenization_utils_base.py:2893` |
-| Jinja2 模板渲染 | `utils/chat_template_utils.py:496` render_jinja_template |
-| Processor 版 apply_chat_template（多模态） | `processing_utils.py:1680` |
-| LLaVA 图像token展开 | `models/llava/processing_llava.py:118-120` |
-| Idefics3 图像token替换 | `models/idefics3/processing_idefics3.py:45-71` |
-| generate 入口 | `generation/utils.py:2123` |
-| _sample 自回归循环 | `generation/utils.py:2650` |
-| while 循环终止条件 | `generation/utils.py:2735` — `_has_unfinished_sequences` |
-| next_token 选择（贪心/采样） | `generation/utils.py:2779-2785` |
-| EOS 检测 | `generation/utils.py:2788-2797` |
-
-### 10.6 纯文本 vs 多模态 流程对比
-
-```
-纯文本：
-  conversation dict → apply_chat_template → Jinja2渲染 → tokenize → model.generate → decode
-
-多模态：
-  conversation dict → apply_chat_template → 提取图片 → image_processor编码图片
-                                                  ↓
-                                           Jinja2渲染(文本部分，图片留<image>占位)
-                                                  ↓
-                                           展开占位符 <image>×576
-                                                  ↓
-                                           分词 + 返回pixel_values
-                                                  ↓
-                                           model.generate(同时接收token+图像特征)
-                                                  ↓
-                                           decode → 人类可读回答
-```
-
-## 十一、总结（核心链路）
+## 十三、总结（核心链路）
 
 ```
 3个类（Config + Model + Tokenizer）
