@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>推理加速技术路线全景</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { background: #eef1f6; }
+  body {
+    font-family: "Songti SC", "Songti TC", "STSong", serif;
+    color: #1b2432; font-size: 10.4pt; line-height: 1.78;
+  }
+  .page {
+    width: 210mm; height: 297mm; background: #fff; position: relative;
+    padding: 15mm 17mm 16mm; page-break-after: always; overflow: hidden; margin: 0 auto;
+  }
+  .page:last-child { page-break-after: auto; }
+  @media screen { .page { box-shadow: 0 1px 6px rgba(15,23,42,.12); margin-bottom: 8mm; } }
+  @media print { html, body { background: #fff; } .page { box-shadow: none; margin: 0; } }
+
+  /* ---------- running head / foot ---------- */
+  .ph {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: "PingFang SC", sans-serif; font-size: 7.4pt; letter-spacing: .4px;
+    color: #94a3b8; border-bottom: .4pt solid #e5eaf2; padding-bottom: 2.2mm;
+  }
+  .ph b { color: #475569; font-weight: 600; }
+  .pf {
+    position: absolute; left: 17mm; right: 17mm; bottom: 8mm;
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: "PingFang SC", sans-serif; font-size: 7.2pt; color: #a3aec0;
+    border-top: .4pt solid #eef2f7; padding-top: 2mm;
+  }
+  .pf .no { font-family: Menlo, monospace; color: #64748b; letter-spacing: .5px; }
+
+  /* ---------- typography ---------- */
+  h2 {
+    font-family: "PingFang SC", sans-serif; font-size: 15pt; font-weight: 600;
+    letter-spacing: .3px; color: #0f172a; margin: 5mm 0 1.5mm;
+  }
+  h2 .n {
+    display: inline-block; font-family: Menlo, monospace; font-size: 8.6pt; font-weight: 700;
+    color: #1d4ed8; background: #eef4ff; border: .4pt solid #c7dafc; border-radius: 1mm;
+    padding: .6mm 1.5mm; margin-right: 2.6mm; vertical-align: 2pt; letter-spacing: .5px;
+  }
+  h3 {
+    font-family: "PingFang SC", sans-serif; font-size: 10.6pt; font-weight: 600;
+    color: #1e3a5f; margin: 4mm 0 1mm;
+  }
+  p { margin: 1.6mm 0; text-align: justify; }
+  .lead { color: #334155; }
+  b, strong { font-weight: 600; color: #0f172a; }
+  em { font-style: normal; background: linear-gradient(transparent 62%, #dbeafe 62%); padding: 0 .4mm; }
+  ul { margin: 1.6mm 0 1.6mm 5mm; }
+  li { margin: .9mm 0; }
+  .chk { list-style: none; margin-left: 0; font-family: "PingFang SC", sans-serif; font-size: 9pt; }
+  .chk li { padding-left: 6.4mm; text-indent: -6.4mm; }
+  .chk li::before { content: "□"; color: #94a3b8; margin-right: 2.2mm; }
+
+  /* ---------- table ---------- */
+  table { width: 100%; border-collapse: collapse; font-family: "PingFang SC", sans-serif;
+          font-size: 8.6pt; line-height: 1.6; margin: 2.4mm 0; }
+  th, td { border: .4pt solid #dbe3ee; padding: 1.7mm 2.2mm; vertical-align: top; text-align: left; }
+  thead th { background: #f5f8fc; color: #334155; font-weight: 600; }
+  tbody tr:nth-child(even) td { background: #fbfcfe; }
+  td.c, th.c { text-align: center; }
+  .tcap { font-family: "PingFang SC", sans-serif; font-size: 7.6pt; color: #94a3b8; margin-top: -1mm; }
+  .hl { background: #fef3ec !important; }
+
+  /* ---------- code / mono ---------- */
+  pre {
+    font-family: "SF Mono", Menlo, monospace; font-size: 7.8pt; line-height: 1.62;
+    background: #f7f9fc; border: .4pt solid #e3eaf3; border-left: 2.4pt solid #2563eb;
+    border-radius: 1mm; padding: 2.6mm 3.4mm; margin: 2.4mm 0; white-space: pre; color: #1e293b;
+    overflow: hidden;
+  }
+  code { font-family: "SF Mono", Menlo, monospace; font-size: 8.6pt; background: #f1f5f9;
+         padding: .2mm .8mm; border-radius: .8mm; }
+
+  /* ---------- callouts ---------- */
+  .note {
+    background: #f6f9fd; border: .4pt solid #dbe7f6; border-left: 2.6pt solid #0d9488;
+    border-radius: 1mm; padding: 2.6mm 3.4mm; margin: 2.6mm 0;
+    font-family: "PingFang SC", sans-serif; font-size: 8.8pt; line-height: 1.7;
+  }
+  .note .t { font-weight: 700; color: #0f766e; font-size: 8.4pt; letter-spacing: .5px; }
+  .quote {
+    font-family: "PingFang SC", sans-serif; font-size: 9pt; color: #334155;
+    background: #f8fafc; border: .4pt solid #e6edf6; border-radius: 1.2mm; padding: 3mm 4mm; margin: 2.6mm 0;
+  }
+  .quote b { color: #1d4ed8; }
+
+  /* ---------- cover ---------- */
+  .cover { padding: 20mm 20mm 16mm; }
+  .kicker { font-family: "PingFang SC", sans-serif; font-size: 8pt; letter-spacing: 2px; color: #2563eb; font-weight: 600; }
+  .cover h1 {
+    font-family: "PingFang SC", sans-serif; font-size: 27pt; font-weight: 700; line-height: 1.34;
+    letter-spacing: .4px; margin: 4mm 0 3mm; color: #0b1220;
+  }
+  .cover .sub { font-family: "PingFang SC", sans-serif; font-size: 11pt; color: #64748b; letter-spacing: .4px; }
+  .rule { height: 1.2pt; background: #0f172a; margin: 7mm 0 6mm; width: 32mm; }
+  .onesent { font-size: 10.2pt; line-height: 1.9; color: #24303f; }
+  .cover .meta {
+    position: absolute; left: 20mm; right: 20mm; bottom: 16mm; display: flex; justify-content: space-between;
+    font-family: "PingFang SC", sans-serif; font-size: 7.6pt; color: #94a3b8;
+    border-top: .4pt solid #e5eaf2; padding-top: 3mm;
+  }
+  .cover .figs { font-family: "PingFang SC", sans-serif; font-size: 8pt; color: #64748b; }
+
+  /* ---------- figure ---------- */
+  figure { margin: 2mm 0 3mm; }
+  figure img { width: 100%; display: block; border: .4pt solid #e2e8f0; border-radius: 1.2mm; }
+  figcaption { font-family: "PingFang SC", sans-serif; font-size: 7.8pt; color: #94a3b8; margin-top: 1.6mm; }
+  .bad, .good { font-family: "PingFang SC", sans-serif; font-size: 8.8pt; line-height: 1.66; padding: 2.4mm 3mm; border-radius: 1mm; }
+  .bad { background: #fef2f2; border: .4pt solid #fbd5d5; color: #7f1d1d; }
+  .good { background: #f0fdf4; border: .4pt solid #cdebd6; color: #14532d; }
+  .bad .m, .good .m { font-weight: 700; margin-right: 1.4mm; }
+
+  /* ---------- stats ---------- */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; margin: 2.6mm 0; }
+  .st { background: #0f172a; border-radius: 1.4mm; padding: 3.2mm 3.4mm; color: #fff;
+        font-family: "PingFang SC", sans-serif; }
+  .st .v { font-size: 16pt; font-weight: 700; letter-spacing: .3px; }
+  .st .l { font-size: 7.6pt; color: #94a3b8; margin-top: 1mm; line-height: 1.5; }
+
+  .dirs {
+    margin-top: 6mm; padding-top: 3mm; border-top: .4pt solid #e5eaf2;
+    display: grid; grid-template-columns: 1fr 1fr; column-gap: 12mm;
+    font-family: "PingFang SC", sans-serif; font-size: 8.2pt; color: #475569;
+  }
+  .dirs div { display: flex; align-items: baseline; gap: 2mm; padding: 1.1mm 0; }
+  .dirs span { font-family: Menlo, monospace; font-size: 7.4pt; color: #94a3b8; }
+  .dirs b { margin-left: auto; font-family: Menlo, monospace; font-size: 7.6pt;
+            color: #64748b; font-weight: 500; }
+
+  /* ---------- 收尾块 ---------- */
+  .ending {
+    margin-top: 12mm; padding: 7mm 8mm; background: #0f172a; border-radius: 2mm;
+    font-family: "PingFang SC", sans-serif; font-size: 10.2pt; line-height: 1.95; color: #cbd5e1;
+    letter-spacing: .2px;
+  }
+  .ending b { color: #fff; font-weight: 600; }
+
+  /* ---------- 三栏耦合点 ---------- */
+  .cp { font-family: "PingFang SC", sans-serif; font-size: 9pt; line-height: 1.7; margin: 2.4mm 0; }
+  .cp .h { font-weight: 700; color: #0f172a; font-size: 9.4pt; }
+  .cp .tag { display: inline-block; font-family: Menlo, monospace; font-size: 7.8pt; font-weight: 700;
+             color: #fff; background: #1d4ed8; border-radius: .8mm; padding: .3mm 1.4mm; margin-right: 1.8mm; }
+  .cp .tag.b { background: #0d9488; } .cp .tag.c { background: #be3e0a; }
+  .cp .io { color: #475569; }
+  .cp .io b { color: #1e3a5f; }
+</style>
+</head>
+<body>
+
+<!-- ============================ P1 封面 ============================ -->
+<section class="page cover">
+  <div class="kicker">模型格式 · 笔记 / 2026.11 · 部署与推理加速</div>
+  <h1>推理加速：<br>把所有技术路线重新理一遍</h1>
+  <div class="sub">三堵墙 · 五条路 · 四招组合拳</div>
+  <div class="rule"></div>
+
+  <div class="onesent">
+    推理加速没有十几种技术，只有<b>三堵墙</b>和<b>五条路</b>。三堵墙是「CPU 发号施令太慢、显存来回搬、算力真的不够」；
+    五条路是「不换格式 / 换通用格式 / 换专用引擎 / 换硬件生态 / 换服务形态」。
+  </div>
+  <div class="onesent" style="margin-top:3mm; color:#475569;">
+    所有名词——ONNX、TensorRT、torch.compile、CUDA Graph、量化、vLLM——都能挂到这两张骨架上。
+    这份笔记做的就是把它们<b>归位</b>，顺带把「为什么快」讲清楚。
+  </div>
+
+  <h2 style="margin-top:8mm;"><span class="n">00</span>六张图与一句话</h2>
+  <table>
+    <thead><tr><th class="c" style="width:9%">图</th><th style="width:29%">回答的问题</th><th>一句话结论</th></tr></thead>
+    <tbody>
+      <tr><td class="c">图 1</td><td>为什么慢</td><td>三堵墙：发号施令、显存带宽、算力</td></tr>
+      <tr><td class="c">图 2</td><td>有哪几条路</td><td>五条路，差别在「谁在编译期做优化」</td></tr>
+      <tr><td class="c">图 3</td><td>后端到底有哪些</td><td>四族：NVIDIA / 跨平台 / 端侧 / LLM</td></tr>
+      <tr><td class="c">图 4</td><td>ONNX 与 TensorRT 什么关系</td><td>一张图纸，和按图纸造的机器</td></tr>
+      <tr><td class="c">图 5</td><td>TensorRT 的四招怎么分工</td><td>各打一处，但会互相放大</td></tr>
+      <tr><td class="c">图 6</td><td>精度能降到多低</td><td>FP32 → INT4，显存线性降、风险指数升</td></tr>
+    </tbody>
+  </table>
+
+  <div class="figs" style="margin-top:2.6mm;">
+    配图：六张，均为 3120 px 宽、2× 超采样；文件名与本文同名，仅以 <code>-图N-标题</code> 区分。
+  </div>
+
+  <div class="dirs">
+    <div><span>01</span>先把四个词分开<b>2</b></div>
+    <div><span>02</span>为什么慢：三堵墙<b>2</b></div>
+    <div><span>03</span>五条路线<b>3</b></div>
+    <div><span>04</span>推理后端有哪些<b>4</b></div>
+    <div><span>05</span>ONNX：六个认知<b>5</b></div>
+    <div><span>06</span>TensorRT 做了什么<b>6</b></div>
+    <div><span>07</span>四招组合拳<b>7</b></div>
+    <div><span>08</span>精度阶梯<b>8</b></div>
+    <div><span>09</span>运行时与并行<b>9</b></div>
+    <div><span>10</span>选型与误区<b>10</b></div>
+    <div><span>11</span>术语与收尾<b>11</b></div>
+  </div>
+
+  <div class="meta">
+    <span>nxcstudy_ai · 模型格式</span>
+    <span>共 11 页 · 配图 6 张</span>
+  </div>
+</section>
+
+<!-- ============================ P2 〇 + 一 ============================ -->
+<section class="page">
+  <div class="ph"><span>推理加速技术路线全景</span><span><b>01 · 02</b>　概念与瓶颈</span></div>
+
+  <h2><span class="n">01</span>先把四个词分开</h2>
+  <p class="lead">新手最先卡住的不是技术，是名词混用。这四组不分开，后面全是雾。</p>
+
+  <table>
+    <thead><tr><th style="width:22%">词</th><th style="width:44%">是什么</th><th>不是什么</th></tr></thead>
+    <tbody>
+      <tr><td><b>格式</b></td><td>一个文件，描述「要算什么」</td><td>不是引擎，自己不跑</td></tr>
+      <tr><td><b>引擎</b>（Runtime）</td><td>一个程序，负责真的把算完</td><td>不是编译器，多数不做深度优化</td></tr>
+      <tr><td><b>编译器</b></td><td>离线工具，把图变成机器码</td><td>不是运行时，跑起来是另一段代码</td></tr>
+      <tr><td><b>精度</b></td><td>数字用几位存</td><td>不是压缩算法，是表示方式</td></tr>
+    </tbody>
+  </table>
+<pre>.pt ──导出──▶ .onnx ──编译──▶ TensorRT ──序列化──▶ .plan ──加载──▶ Runtime
+     （格式）        （编译器）             （格式）        （引擎）</pre>
+
+  <div class="note">
+    <span class="t">最容易犯的错</span><br>
+    以为「换成 ONNX 就快了」。<b>不会。</b>换格式只是让下游的优化器有机会介入，它自己不产生任何加速。
+  </div>
+
+  <h2><span class="n">02</span>为什么慢：三堵墙</h2>
+
+  <figure>
+    <img src="2026-11-推理加速技术路线全景-图1-三堵墙.png" alt="图 1 · 三堵墙">
+    <figcaption>图 1　三堵墙：所有加速技术都在翻其中一堵（3120 × 1341）</figcaption>
+  </figure>
+
+  <p><b>① 发号施令</b>：GPU 算得比 CPU 发命令快，kernel 小时大半时间在等。<br>
+  <b>② 显存带宽</b>：中间结果反复写回显存，带宽先打满——<b>最常见的瓶颈</b>。<br>
+  <b>③ 算力</b>：FLOPs 就那么多，只能换硬件或降精度。</p>
+
+<pre>先看 GPU 利用率 ──低──▶ 撞的是 ①
+      高 ──▶ 再量 DRAM 带宽 ──满──▶ 撞的是 ②
+                      没满 ──▶ 最后看算力 ──满──▶ 撞的是 ③</pre>
+
+  <p>顺序反了的代价：<b>在 ① 的问题上花三天做量化，然后发现一点没变快。</b></p>
+
+  <div class="pf"><span>2026.11 · 模型格式笔记</span><span class="no">02 / 11</span></div>
+</section>
+
+<!-- ============================ P3 三 ============================ -->
+<section class="page">
+  <div class="ph"><span>推理加速技术路线全景</span><span><b>03</b>　五条路线</span></div>
+
+  <h2><span class="n">03</span>五条路线</h2>
+  <p class="lead">同一份 <code>.pt</code>，可以走五条完全不同的路。<b>差别不在格式，在「谁替你在编译期做优化、做得多狠」。</b></p>
+
+  <figure>
+    <img src="2026-11-推理加速技术路线全景-图2-路线全景.png" alt="图 2 · 路线全景">
+    <figcaption>图 2　五条路线：同一份训练产物，五种部署形态（3120 × 1807）</figcaption>
+  </figure>
+
+  <table>
+    <thead><tr><th style="width:13%">路线</th><th style="width:20%">做什么</th><th style="width:14%">产物</th><th style="width:24%">推理后端</th><th>代价</th></tr></thead>
+    <tbody>
+      <tr><td><b>A 保持 PyTorch</b></td><td>只换执行方式，<code>torch.compile</code></td><td>进程内产物</td><td>PyTorch ATen + cuDNN / Inductor</td><td>首次编译慢；多变会重编译</td></tr>
+      <tr><td><b>B 通用格式</b></td><td>导出 ONNX，交给 ORT</td><td><code>model.onnx</code></td><td>ONNX Runtime（+ EP 插件）</td><td>优化保守，只拿一部分收益</td></tr>
+      <tr><td><b>C 专用引擎</b></td><td>ONNX → TensorRT 编译</td><td><code>model.plan</code></td><td>TensorRT</td><td>绑死 GPU 型号与 TRT 版本</td></tr>
+      <tr><td><b>D 硬件生态</b></td><td>各家 SDK</td><td><code>.rknn</code> / <code>.mlmodel</code></td><td>RKNN / CoreML / TFLite / NCNN</td><td>算子覆盖不全，常要改结构</td></tr>
+      <tr><td><b>E 大模型专用</b></td><td>vLLM / TRT-LLM / SGLang</td><td>服务化引擎</td><td>vLLM / SGLang / TensorRT-LLM</td><td>面向吞吐，不是单条延迟</td></tr>
+    </tbody>
+  </table>
+  <div class="tcap">表 2　五条路线：做什么、出什么格式、交给哪个后端</div>
+
+  <p>两点补充：</p>
+  <ul>
+    <li><b>C 的代价最硬</b>：engine 本质是一段为当前 GPU 生成的机器码，换卡要重编、升级 TRT 要重编、动态 shape 要提前声明 profile。</li>
+    <li><b>E 和 A–D 不是替代关系</b>：TensorRT-LLM 内部同样做 ONNX/TRT 那一套，vLLM 的 kernel 也是编译好的 CUDA。E 是在 D 之上再加「调度层」。</li>
+  </ul>
+
+  <div class="pf"><span>2026.11 · 模型格式笔记</span><span class="no">03 / 11</span></div>
+</section>
+
+<!-- ============================ P4 后端 ============================ -->
+<section class="page">
+  <div class="ph"><span>推理加速技术路线全景</span><span><b>04</b>　推理后端</span></div>
+
+  <h2><span class="n">04</span>推理后端：真正干活的那一层</h2>
+  <p class="lead">五条路里说的「产物」只是<b>格式</b>；真正把 kernel 跑起来的是<b>后端</b>。把后端补齐，这张表才完整。</p>
+
+  <figure>
+    <img src="2026-11-推理加速技术路线全景-图3-推理后端全景.png" alt="图 3 · 推理后端全景">
+    <figcaption>图 3　推理后端全景：前端 / 后端 / 服务层，三件事不要混（3120 × 1443）</figcaption>
+  </figure>
+
+  <p>按生态分成<b>四族</b>，记住四族比背名字有用：<b>NVIDIA 专属</b>（PyTorch 原生 + Inductor + TensorRT）、<b>跨平台通用</b>（ORT / OpenVINO / TVM / XLA）、<b>端侧</b>（ExecuTorch / NCNN / MNN / TFLite / CoreML / RKNN / QNN）、<b>LLM 运行时</b>（vLLM / SGLang / TensorRT-LLM / llama.cpp）。</p>
+
+  <h3>三个不要混的概念</h3>
+  <p><b>① 格式 ≠ 后端。</b>一个 <code>.onnx</code> 能被 ORT、TensorRT、OpenVINO、TVM 同时读。「用了 ONNX」完全不能说明快慢——<b>要看它被谁读</b>。</p>
+  <p><b>② EP 是插件。</b>ONNX Runtime 的「执行提供器」本质是把别的后端接进来：CUDA EP 走 cuDNN、TensorRT EP 直接调 TRT、OpenVINO EP 调 Intel、QNN 走高通 NPU。<b>换 EP 就换硬件，模型一行不用改</b>——这是 ORT 最大的价值。</p>
+  <p><b>③ 服务层不是后端。</b>Triton / TorchServe / KServe 只管排队和路由，真正算的还是下面那层。<b>后端决定「多快」，服务层决定「同时服务多少个」。</b></p>
+
+  <div class="note">
+    <span class="t">一句话选后端</span><br>
+    只有 N 卡追延迟 → <b>TensorRT</b>；要跨硬件含 CPU → <b>ONNX Runtime</b>；Intel 平台 → <b>OpenVINO</b>；
+    手机车机 → <b>芯片厂商 SDK</b>；LLM 高并发 → <b>vLLM</b>，追极致上 <b>TensorRT-LLM</b>。
+  </div>
+
+  <div class="pf"><span>2026.11 · 模型格式笔记</span><span class="no">04 / 11</span></div>
+</section>
+
+<!-- ============================ P4 四 ============================ -->
+<section class="page">
+  <div class="ph"><span>推理加速技术路线全景</span><span><b>05</b>　ONNX</span></div>
+
+  <h2><span class="n">05</span>ONNX：六个必须纠正的认知</h2>
+
+  <h3>① ONNX 不是引擎，是中间表示（IR）</h3>
+  <p>它是一张<b>有向无环图</b>：节点是算子（Conv、MatMul、Add），边是 tensor，文件本质是 protobuf。它只做一件事——<b>跨框架交换</b>。</p>
+
+  <h3>② 导出 ONNX 时，几乎不做任何优化</h3>
+  <p>做的事情：trace 一次真实 forward → PyTorch 算子 <b>1:1 映射</b>成 ONNX 算子 → 固化成静态图落盘。<br>
+  <b>不做</b>：算子融合、kernel 选择、内存规划。<b>导出器的目标是语义正确，不是性能。</b></p>
+
+  <h3>③ ONNX Runtime ≠ ONNX</h3>
+  <p>ONNX 是<b>文件格式</b>；ONNX Runtime 是<b>执行引擎</b>。混为一谈，就会问出「我用了 ONNX 为什么还是没变快」——因为你只换了格式，还没接引擎。</p>
+
+  <h3>④ 即使两者都做 fusion，ORT 也没 TensorRT 快</h3>
+  <p>差的不是融合，是三件事：<b>kernel 自动调优</b>、<b>全局内存规划</b>、<b>精度优化</b>。ORT 走 cuDNN/cuBLAS 的通用路径，TensorRT 走 NVIDIA 为每代 GPU 调过的路径。</p>
+
+  <h3>⑤ TensorRT 快，不只是因为融合</h3>
+  <p>见第 05、06 节——四招各有分工，融合只是其中之一。</p>
+
+  <h3>⑥ 顺序不能反</h3>
+
+<pre>先让模型在 PyTorch 里跑对
+   → 再导出 ONNX 并做数值比对
+      → 最后才上 TensorRT 调优</pre>
+
+  <div class="bad"><span class="m">✗</span>跳过数值比对直接上 TRT：你会花一周时间 debug 一个本来在 ONNX 层就错的算子映射。</div>
+  <div class="good" style="margin-top:1.6mm;"><span class="m">✓</span>三段式推进，每段都有可验证的产出：跑通 → 对得上 → 变快。</div>
+
+  <div class="pf"><span>2026.11 · 模型格式笔记</span><span class="no">05 / 11</span></div>
+</section>
+
+<!-- ============================ P5 五（图3） ============================ -->
+<section class="page">
+  <div class="ph"><span>推理加速技术路线全景</span><span><b>06</b>　TensorRT 流水</span></div>
+
+  <h2><span class="n">06</span>ONNX 是图纸，TensorRT 是按图纸造的机器</h2>
+
+  <figure>
+    <img src="2026-11-推理加速技术路线全景-图4-ONNX与TensorRT.png" alt="图 4 · ONNX 与 TensorRT">
+    <figcaption>图 4　从 PyTorch 到 TensorRT：每步做了什么、没做什么（3120 × 1612）</figcaption>
+  </figure>
+
+  <p>原笔记那句话值得抄下来：</p>
+  <div class="quote">
+    <b>TensorRT 快不是单一原因，而是融合（减 IO）+ 自动调优（选最优 kernel）+ 内存优化（复用 + 不落地）+ 精度优化（FP16/INT8）的四重组合拳。</b>
+  </div>
+
+  <table>
+    <thead><tr><th style="width:26%">阶段</th><th>做什么</th><th class="c" style="width:12%">频率</th></tr></thead>
+    <tbody>
+      <tr><td><b>编译期</b></td><td>解析 → 图优化 → kernel 选择 → 内存规划 → 序列化</td><td class="c"><b>一次</b></td></tr>
+      <tr><td><b>运行期</b></td><td>反序列化 → 建 context → 分配 buffer → enqueue → 取结果</td><td class="c">每帧</td></tr>
+    </tbody>
+  </table>
+
+  <p><b>关键认知：性能上限在编译期就定了，运行期只是照着跑。</b>所以「推理慢」八成要在编译阶段解决，而不是在运行时代码里加优化。</p>
+
+  <h3>engine / context / stream</h3>
+  <ul>
+    <li><b>engine</b>：编译好的程序，可落盘复用，一个模型一份</li>
+    <li><b>context</b>：engine 的运行实例，一个 engine 可开多个，共享权重</li>
+    <li><b>stream</b>：CUDA 执行队列，多个 context 可跑在不同 stream 并行</li>
+  </ul>
+  <p>多路视频流推理时，通常就是「一个 engine + 多个 context + 多个 stream」。</p>
+
+  <div class="pf"><span>2026.11 · 模型格式笔记</span><span class="no">06 / 11</span></div>
+</section>
+
+<!-- ============================ P6 六（图4） ============================ -->
+<section class="page">
+  <div class="ph"><span>推理加速技术路线全景</span><span><b>07</b>　四招组合拳</span></div>
+
+  <h2><span class="n">07</span>四招各自省什么</h2>
+
+  <figure>
+    <img src="2026-11-推理加速技术路线全景-图5-四招组合拳.png" alt="图 5 · 四招组合拳">
+    <figcaption>图 5　四招组合拳：各自打在哪、怎么互相放大（3120 × 1677）</figcaption>
+  </figure>
+
+  <table>
+    <thead><tr><th style="width:16%">招</th><th style="width:22%">省的是</th><th style="width:16%">打在哪</th><th>一句话</th></tr></thead>
+    <tbody>
+      <tr><td><b>融合</b></td><td>搬运（IO）</td><td>② 带宽</td><td>多个算子合成一个 kernel，<b>只搬一次</b></td></tr>
+      <tr><td><b>自动调优</b></td><td>计算</td><td>③ 算力</td><td>无数种实现里，实测选出<b>最快</b>的那个</td></tr>
+      <tr><td><b>内存优化</b></td><td>峰值显存 + L2 命中</td><td>④ 容量 / ② 带宽</td><td>生命周期不重叠的中间张量<b>共用一块</b></td></tr>
+      <tr><td><b>精度优化</b></td><td>计算 + 显存 + 搬运</td><td>②③④ <b>全中</b></td><td>位宽减半，<b>三样一起省</b></td></tr>
+    </tbody>
+  </table>
+  <div class="tcap">表 3　四招的分工（④ 是容量，不是第四堵速度墙）</div>
+
+  <p><b>注意最后一行的形状：前三招各打一个点，精度一打就是三个。</b>这就是为什么量化经常是性价比最高的一步。</p>
+
+  <h3>降精度的「三重暴击」</h3>
+
+<pre>① 算得快  ── Tensor Core 对 FP16 的吞吐是 FP32 的 2–8 倍
+② 省显存  ── 32 位变 16 位，显存直接减半，能塞更大模型
+③ 搬得快  ── 要搬的字节数减半，同样带宽，时间直接减半</pre>
+
+  <p>三项叠加，正好覆盖三堵墙里的两堵（②带宽、③算力）加一个容量（④）。<b>它同时打三处，而其他三招各打一处</b>——这就是单点收益最大的原因。</p>
+
+  <div class="pf"><span>2026.11 · 模型格式笔记</span><span class="no">07 / 11</span></div>
+</section>
+
+<!-- ============================ P7 六续 + 七（图5） ============================ -->
+<section class="page">
+  <div class="ph"><span>推理加速技术路线全景</span><span><b>07 · 08</b>　组合拳与精度</span></div>
+
+  <h2><span class="n">07</span>组合拳：四招怎么互相放大</h2>
+  <p class="lead">单独看每一招，收益经常只有 10–20%；<b>叠起来才会出现量级差别</b>。有三条正反馈在起作用。</p>
+
+  <table>
+    <thead><tr><th style="width:26%">反馈</th><th>链条</th></tr></thead>
+    <tbody>
+      <tr><td><b>融合 → 内存 → 吞吐</b></td><td>中间结果不落地 → 显存峰值↓ → 能开更大 batch → 单张成本被摊薄</td></tr>
+      <tr><td><b>精度 → 带宽 → 融合</b></td><td>数据量减半 → 带宽压力减半 → 融合省下的那部分带宽<b>相对更值钱</b></td></tr>
+      <tr><td><b>内存 → 缓存 → 调优</b></td><td>显存复用 → 布局更紧凑 → L2 命中↑ → 调优选出的 kernel 才真跑得动</td></tr>
+    </tbody>
+  </table>
+
+  <p>反过来看更清楚：<b>没有内存优化</b>，融合了的算子也可能因显存不够而频繁换入换出；<b>没有精度优化</b>，调优再好也会被庞大的数据搬运量拖住。</p>
+
+  <div class="quote">
+    <b>面试版一句话</b>：融合减 IO，调优减计算，内存复用减峰值，降精度实现「计算 / 显存 / 搬运」三赢。<br>
+    四招单独用都只是小赚，叠在一起才会出现量级差别。
+  </div>
+
+  <h2><span class="n">08</span>精度阶梯</h2>
+
+  <figure>
+    <img src="2026-11-推理加速技术路线全景-图6-精度阶梯.png" alt="图 6 · 精度阶梯">
+    <figcaption>图 6　精度阶梯：FP32 → INT4，每降一档换到什么、失去什么（3120 × 1352）</figcaption>
+  </figure>
+
+  <p>两个关键点：<b>显存和带宽按位宽线性下降，但速度是台阶式跳变</b>（必须有对应 Tensor Core 才算数）；<b>精度风险是指数级上升</b>的。FP16 几乎无损；INT8 在图像/检测类通常掉不到 1 个点；INT4 基本必须靠 QAT 或分组量化。</p>
+
+  <div class="pf"><span>2026.11 · 模型格式笔记</span><span class="no">08 / 11</span></div>
+</section>
+
+<!-- ============================ P8 七续 + 八 ============================ -->
+<section class="page">
+  <div class="ph"><span>推理加速技术路线全景</span><span><b>08 · 09</b>　精度与运行时</span></div>
+
+  <h3>PTQ 与 QAT</h3>
+  <table>
+    <thead><tr><th style="width:20%"></th><th>PTQ（训练后量化）</th><th>QAT（量化感知训练）</th></tr></thead>
+    <tbody>
+      <tr><td><b>做法</b></td><td>跑几十~几百张图统计每层范围</td><td>训练时就模拟量化误差</td></tr>
+      <tr><td><b>成本</b></td><td>低，调几个超参</td><td>高，要重训</td></tr>
+      <tr><td><b>适用</b></td><td>INT8 的常态做法</td><td>INT4 及以下基本必须</td></tr>
+      <tr><td><b>路径</b></td><td colspan="2">先 PTQ 拿基线 → 掉点明显再 QAT 微调</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    <span class="t">一条容易忽略的：按需反量化</span><br>
+    INT8 模型存的是 int8 权重 + scale。推理时<b>不是提前把整层反量化好</b>，而是算到第 L 层才反量化第 L 层，算完丢弃。
+    如果提前全反量化，float 权重膨胀 4 倍，<b>省显存的意义就没了</b>。
+  </div>
+
+  <h2><span class="n">09</span>运行时与并行：两条容易被忽略的路</h2>
+
+  <p>前面都在「编译期」做文章。还有一类技术，动的是<b>运行期怎么发命令、怎么排队</b>。</p>
+
+  <table>
+    <thead><tr><th style="width:26%">技术</th><th style="width:44%">在做什么</th><th>限制</th></tr></thead>
+    <tbody>
+      <tr><td><b>CUDA Graph</b></td><td>把一串 kernel 启动「录」下来，一键重放</td><td>必须静态形状、无分支</td></tr>
+      <tr><td><b>连续批处理</b></td><td>请求不等整批做完，完成的就走、新的就进</td><td>需要调度器支持</td></tr>
+      <tr><td><b>PagedAttention</b></td><td>KV cache 按页分配，像虚拟内存一样</td><td>LLM 专用</td></tr>
+      <tr><td><b>前缀缓存</b></td><td>相同 prompt 前缀的 KV 复用</td><td>要识别公共前缀</td></tr>
+    </tbody>
+  </table>
+
+  <p><b>CUDA Graph 值得单独说</b>：它经常被当成「TensorRT 的一部分」，其实不是——它是 TRT 的可选插件，也是 <code>torch.compile(mode="reduce-overhead")</code> 的内部机制。限制很硬：输入形状固定、不能有 if/else、第一次要预热录制。</p>
+
+  <h3>并行：什么时候才轮到它</h3>
+  <p><b>能用一张卡 + 量化解决的，别上并行。</b>并行的通信开销经常吃掉一半收益。真要切，张量并行切层内矩阵（通信量最大，要 NVLink）、流水并行切层（有气泡）、MoE 切专家（路由复杂）。</p>
+
+  <div class="pf"><span>2026.11 · 模型格式笔记</span><span class="no">09 / 11</span></div>
+</section>
+
+<!-- ============================ P9 九 ============================ -->
+<section class="page">
+  <div class="ph"><span>推理加速技术路线全景</span><span><b>10</b>　选型与误区</span></div>
+
+  <h2><span class="n">10</span>我该选哪条</h2>
+  <p class="lead">按你的处境走，不用背表。</p>
+
+<pre>模型还在改 / 还在调结构
+  └─▶ A：torch.compile。别急着上 TensorRT —— 改一次模型要重编一次
+
+已定版、NVIDIA GPU、追低延迟
+  └─▶ C：ONNX → TensorRT。先跑 FP16，掉点可接受就停
+
+部署在 CPU / x86 服务器
+  └─▶ B：ONNX Runtime 或 OpenVINO。先确认算子被支持，再谈量化
+
+部署在手机 / 车机 / 开发板
+  └─▶ D：先看芯片厂商给什么 SDK，先核对算子清单
+
+LLM 在线服务、关心吞吐
+  └─▶ E：vLLM 起步，追极致上 TensorRT-LLM。先分清 prefill 慢还是 decode 慢
+
+只想训练/调试快一点
+  └─▶ A：torch.compile，一行搞定</pre>
+
+  <p><b>一条经验：先做「能跑通」，再做「更快」。</b>大部分团队卡在第一步（算子不支持、数值对不上），而不是第二步。</p>
+
+  <h3>十二个常见误区</h3>
+  <table>
+    <thead><tr><th class="c" style="width:6%">#</th><th style="width:34%">误区</th><th>实际</th></tr></thead>
+    <tbody>
+      <tr><td class="c">1</td><td>ONNX 是推理引擎</td><td>它只是图格式，不执行</td></tr>
+      <tr><td class="c">2</td><td>导出 ONNX 会自动优化</td><td>1:1 映射，只保语义正确</td></tr>
+      <tr><td class="c">3</td><td>TensorRT 快是因为融合</td><td>融合只是一项，还有调优/内存/精度</td></tr>
+      <tr><td class="c">4</td><td>ORT 和 TensorRT 差不多</td><td>缺自动调优与全局内存规划，差距明显</td></tr>
+      <tr><td class="c">5</td><td>FP16 一定更快</td><td>没有 Tensor Core 或不在瓶颈时，可能没变化</td></tr>
+      <tr><td class="c">6</td><td>INT8 一定掉很多点</td><td>图像/检测类通常 &lt; 1 个点，要实测</td></tr>
+      <tr><td class="c">7</td><td>engine 可以跨卡复用</td><td>绑死 GPU 型号 + TRT 版本</td></tr>
+      <tr><td class="c">8</td><td>CUDA Graph 万能</td><td>必须静态形状，动态分支录不了</td></tr>
+      <tr><td class="c">9</td><td>batch 越大越好</td><td>用延迟换吞吐，实时场景要克制</td></tr>
+      <tr><td class="c">10</td><td>融合越多越好</td><td>过度融合可能挡住并行、影响数值</td></tr>
+      <tr><td class="c">11</td><td>量化完不用验证</td><td>必须跑评测集比对，否则是赌博</td></tr>
+      <tr><td class="c">12</td><td>加速就是「换个格式」</td><td>是编译 + 运行时 + 精度三件事一起</td></tr>
+    </tbody>
+  </table>
+
+  <div class="pf"><span>2026.11 · 模型格式笔记</span><span class="no">10 / 11</span></div>
+</section>
+
+<!-- ============================ P10 十 + 收尾 ============================ -->
+<section class="page">
+  <div class="ph"><span>推理加速技术路线全景</span><span><b>11</b>　术语与收尾</span></div>
+
+  <h2><span class="n">11</span>术语速查</h2>
+
+  <table>
+    <thead><tr><th style="width:20%">缩写</th><th style="width:28%">全称</th><th>一句话</th></tr></thead>
+    <tbody>
+      <tr><td><b>IR</b></td><td>Intermediate Representation</td><td>中间表示，一张计算图</td></tr>
+      <tr><td><b>ONNX</b></td><td>Open Neural Network Exchange</td><td>开放的计算图交换格式（protobuf）</td></tr>
+      <tr><td><b>ORT</b></td><td>ONNX Runtime</td><td>微软的执行引擎，靠 EP 插件接后端</td></tr>
+      <tr><td><b>EP</b></td><td>Execution Provider</td><td>ORT 的后端插件（CUDA / TRT / OpenVINO）</td></tr>
+      <tr><td><b>TRT</b></td><td>TensorRT</td><td>NVIDIA 的推理编译器 + 运行时</td></tr>
+      <tr><td><b>engine / plan</b></td><td>—</td><td>TRT 编译产物，一段 GPU 专用机器码</td></tr>
+      <tr><td><b>fusion</b></td><td>算子融合</td><td>多个算子合成一个 kernel</td></tr>
+      <tr><td><b>PTQ</b></td><td>Post-Training Quantization</td><td>训练后量化，要校准数据</td></tr>
+      <tr><td><b>QAT</b></td><td>Quantization-Aware Training</td><td>量化感知训练，要重训</td></tr>
+      <tr><td><b>PagedAttention</b></td><td>—</td><td>KV cache 按页管理，像虚拟内存</td></tr>
+    </tbody>
+  </table>
+
+  <h3>这张图和那几篇笔记的关系</h3>
+  <p style="font-family:'PingFang SC',sans-serif;font-size:8.8pt;color:#475569;line-height:1.8;">
+    本文是「总图」，其余是「放大镜」：
+    <code>2026-06-ONNX与TensorRT推理加速</code>（第 04–05 节原始版）　|　
+    <code>2026-09-PyTorch执行原理与torch.compile-CUDA-Graph-TensorRT</code>（第 08 节）　|　
+    <code>2026-09-量化核心公式与按需反量化</code>（第 07 节）　|　
+    <code>2026-06-state_dict与模型保存加载</code>（第 01 节）　|　
+    <code>2026-09-动态模型并行与KV缓存冲突</code>（并行部分）
+  </p>
+
+  <h3>三句话收尾</h3>
+  <p>1　<b>诊断先于开药</b>：先判断撞的是哪堵墙，再决定用哪个工具。<br>
+     2　<b>格式不等于加速</b>：换 ONNX 不产生速度，产生速度的是编译器的四件事。<br>
+     3　<b>能跑通比跑得快重要</b>：90% 的时间花在算子不支持与数值对不上。</p>
+
+  <div class="ending">
+    如果只能记一句：<b>ONNX 是一张标准图纸，TensorRT 是按这张图纸、针对具体 GPU 型号打造的定制机器</b>——<br>
+    它快不是单一原因，是「融合减 IO、调优减计算、内存复用减峰值、降精度三赢」的四重组合拳。
+  </div>
+
+  <div class="pf"><span>2026.11 · 模型格式笔记</span><span class="no">11 / 11</span></div>
+</section>
+
+<script>
+window.addEventListener('load', function () {
+  var out = [];
+  document.querySelectorAll('.page').forEach(function (p, i) {
+    var cs = getComputedStyle(p);
+    var pb = parseFloat(cs.paddingBottom);
+    var limit = p.getBoundingClientRect().bottom - pb;
+    var maxb = 0, who = '';
+    Array.prototype.forEach.call(p.children, function (c) {
+      if (c.classList.contains('pf') || c.tagName === 'SCRIPT') return;
+      var b = c.getBoundingClientRect().bottom;
+      if (b > maxb) { maxb = b; who = c.className || c.tagName; }
+    });
+    if (maxb > limit + 1) out.push('P' + (i + 1) + '(+' + Math.round(maxb - limit) + 'px,' + who + ')');
+  });
+  document.body.setAttribute('data-overflow', out.length ? out.join(' | ') : 'none');
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>ROS 三种通信机制</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1500px; height: 1064px; }
+  body {
+    font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #f7f9fc; color: #0f172a; padding: 32px 44px 24px;
+    display: flex; flex-direction: column;
+  }
+  .topbar { display: flex; align-items: flex-end; justify-content: space-between; }
+  h1 { font-size: 30px; font-weight: 700; letter-spacing: .2px; }
+  h1 span { color: #2563eb; }
+  .sub { font-size: 13.5px; color: #64748b; margin-top: 7px; }
+  .tag { font-size: 12px; color: #1d4ed8; background: #e8f0fe; border: 1px solid #c7dafc;
+         padding: 5px 11px; border-radius: 999px; font-weight: 600; }
+
+  .rows { margin-top: 16px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
+  .row { display: flex; align-items: center; gap: 26px; background: #fff;
+         border: 1px solid #e4eaf2; border-radius: 16px; padding: 14px 20px 14px 0;
+         box-shadow: 0 1px 2px rgba(15,23,42,.04); position: relative; overflow: hidden; }
+  .row::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--c); }
+
+  .info { width: 560px; padding-left: 24px; }
+  .head { display: flex; align-items: baseline; gap: 10px; }
+  .no { font-size: 12px; font-weight: 700; color: var(--c); background: var(--cbg);
+        border-radius: 6px; padding: 3px 7px; letter-spacing: .5px; }
+  .head h2 { font-size: 19px; font-weight: 700; letter-spacing: .2px; }
+  .head h2 small { font-size: 12px; font-weight: 500; color: #94a3b8; margin-left: 7px; letter-spacing: .2px; }
+  .analogy { font-size: 12.8px; color: var(--c); background: var(--cbg); border-radius: 8px;
+             padding: 6px 11px; margin-top: 9px; display: inline-block; }
+  ul { list-style: none; margin-top: 9px; }
+  li { font-size: 12.6px; color: #334155; line-height: 1.62; padding-left: 13px; position: relative; }
+  li::before { content: ""; position: absolute; left: 0; top: 8px; width: 5px; height: 5px;
+               border-radius: 50%; background: var(--c); opacity: .55; }
+  .ex { margin-top: 9px; font-size: 11.8px; color: #64748b; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .ex b { color: #94a3b8; font-weight: 600; letter-spacing: .5px; }
+  .ex span { background: #f1f5f9; border: 1px solid #e6ebf2; border-radius: 6px; padding: 2px 7px; color: #475569; }
+  .ex span.m { font-family: "SF Mono", Menlo, monospace; font-size: 11px; }
+
+  svg { flex: 1; display: block; }
+
+  .pick { margin-top: 14px; background: #fff; border: 1px solid #e4eaf2; border-radius: 14px;
+          padding: 13px 20px; display: flex; align-items: center; gap: 22px; }
+  .pick-title { font-size: 12px; font-weight: 700; color: #64748b; letter-spacing: 1px; flex: 0 0 54px; }
+  .pick-items { display: flex; gap: 14px; flex: 1; }
+  .pick-items > div { flex: 1; display: flex; align-items: baseline; gap: 7px; flex-wrap: wrap; }
+  .pick-items b { font-size: 12.6px; color: #0f172a; font-weight: 600; }
+  .pick-items em { font-style: normal; font-size: 12.2px; font-weight: 700; }
+  .pick-items small { font-size: 11.2px; color: #94a3b8; margin-left: 3px; }
+  .footnote { margin-top: 9px; font-size: 11.4px; color: #94a3b8; text-align: center; }
+  .footnote b { color: #475569; }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div>
+      <h1>ROS 三种通信机制怎么选：<span>Topic · Service · Action</span></h1>
+      <div class="sub">同一个 ROS 图里三种机制可以混用 —— 区别不在"新不新"，而在数据是"一直流"、"问一次"还是"跑很久"。</div>
+    </div>
+    <div class="tag">图 2 / 2 · 通信机制</div>
+  </div>
+
+  <div class="rows">
+
+    <!-- ================= Topic ================= -->
+    <section class="row" style="--c:#2563eb; --cbg:#eef4ff;">
+      <div class="info">
+        <div class="head"><span class="no">01</span><h2>Topic 发布 / 订阅<small>Publish–Subscribe</small></h2></div>
+        <div class="analogy">类比：广播电台 —— 只管往外播，谁在听、几个在听都不关心</div>
+        <ul>
+          <li>异步、一对多（也可多对多），发布者与订阅者互不知道对方存在，靠话题名解耦</li>
+          <li>适合持续变化的状态和高频数据流，丢一帧通常无所谓</li>
+          <li>用 QoS 调可靠性：传感器 best_effort，控制指令 reliable</li>
+          <li>没有"完成"的概念，节点活着就一直流</li>
+        </ul>
+        <div class="ex"><b>典型</b><span class="m">/scan</span><span class="m">/vehicle/speed</span><span class="m">/cmd_vel</span></div>
+      </div>
+      <svg viewBox="0 0 760 215" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="tb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/>
+          </marker>
+          <marker id="tbg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#93a7c4"/>
+          </marker>
+        </defs>
+        <rect x="8" y="76" width="152" height="64" rx="11" fill="#fff" stroke="#c7d7f5" stroke-width="1.4"/>
+        <text x="84" y="102" text-anchor="middle" font-size="13" font-weight="700" fill="#1e3a8a">发布者节点</text>
+        <text x="84" y="122" text-anchor="middle" font-size="10.5" fill="#7c8ba1">publisher</text>
+
+        <line x1="164" y1="108" x2="204" y2="108" stroke="#2563eb" stroke-width="2.2" marker-end="url(#tb)"/>
+        <text x="180" y="94" text-anchor="middle" font-size="9.6" fill="#2563eb" font-weight="600">publish()</text>
+
+        <rect x="210" y="86" width="172" height="44" rx="22" fill="#eef4ff" stroke="#2563eb" stroke-width="1.6" stroke-dasharray="6 4"/>
+        <text x="296" y="105" text-anchor="middle" font-size="12" font-weight="700" fill="#1d4ed8" font-family="Menlo, monospace">/vehicle/speed</text>
+        <text x="296" y="121" text-anchor="middle" font-size="9.5" fill="#5b7bb8">Topic · std_msgs/Float32</text>
+        <text x="296" y="150" text-anchor="middle" font-size="9.6" fill="#94a3b8">订阅者数量 0～N，由订阅关系决定</text>
+
+        <path d="M382,108 C416,108 420,36 452,36" fill="none" stroke="#93a7c4" stroke-width="1.8" marker-end="url(#tbg)"/>
+        <path d="M382,108 L452,108" fill="none" stroke="#93a7c4" stroke-width="1.8" marker-end="url(#tbg)"/>
+        <path d="M382,108 C416,108 420,180 452,180" fill="none" stroke="#93a7c4" stroke-width="1.8" marker-end="url(#tbg)"/>
+        
+        <rect x="452" y="14" width="168" height="44" rx="9" fill="#f8fafc" stroke="#d7dfea" stroke-width="1.3"/>
+        <text x="536" y="33" text-anchor="middle" font-size="12" font-weight="600" fill="#334155">规划节点</text>
+        <text x="536" y="49" text-anchor="middle" font-size="9.5" fill="#94a3b8">局部位姿 / 障碍</text>
+
+        <rect x="452" y="86" width="168" height="44" rx="9" fill="#f8fafc" stroke="#d7dfea" stroke-width="1.3"/>
+        <text x="536" y="105" text-anchor="middle" font-size="12" font-weight="600" fill="#334155">控制节点</text>
+        <text x="536" y="121" text-anchor="middle" font-size="9.5" fill="#94a3b8">车速 / 转向反馈</text>
+
+        <rect x="452" y="158" width="168" height="44" rx="9" fill="#f8fafc" stroke="#d7dfea" stroke-width="1.3"/>
+        <text x="536" y="177" text-anchor="middle" font-size="12" font-weight="600" fill="#334155">rosbag 记录</text>
+        <text x="536" y="193" text-anchor="middle" font-size="9.5" fill="#94a3b8">回放与离线复盘</text>
+
+      </svg>
+    </section>
+
+    <!-- ================= Service ================= -->
+    <section class="row" style="--c:#b45309; --cbg:#fdf3e3;">
+      <div class="info">
+        <div class="head"><span class="no">02</span><h2>Service 请求 / 响应<small>Request–Response</small></h2></div>
+        <div class="analogy">类比：打电话查话费 —— 问一次，答一次，然后挂断</div>
+        <ul>
+          <li>同步阻塞：客户端发出 Request 后等 Response，超时即失败</li>
+          <li>严格一对一，服务端先注册服务名，客户端按名字调用</li>
+          <li>中间没有进度反馈，只有"成功 / 失败 + 结果"，不适合几十秒以上的任务</li>
+          <li>适合"查一次""算一次""触发一次"的瞬时操作</li>
+        </ul>
+        <div class="ex"><b>典型</b><span class="m">/get_battery_level</span><span>夹爪开合</span><span>单帧红灯检测</span></div>
+      </div>
+      <svg viewBox="0 0 760 215" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="sb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#b45309"/>
+          </marker>
+          <marker id="sbd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#c98a3c"/>
+          </marker>
+        </defs>
+        <rect x="248" y="8" width="264" height="34" rx="8" fill="#fdf3e3" stroke="#e8c48c" stroke-width="1.2"/>
+        <text x="380" y="30" text-anchor="middle" font-size="11.5" font-weight="700" fill="#92400e" font-family="Menlo, monospace">srv：/get_battery_level</text>
+
+        <rect x="8" y="72" width="154" height="66" rx="11" fill="#fff" stroke="#e8c48c" stroke-width="1.4"/>
+        <text x="85" y="99" text-anchor="middle" font-size="13" font-weight="700" fill="#7c2d12">客户端节点</text>
+        <text x="85" y="119" text-anchor="middle" font-size="10.5" fill="#a89275">client · 阻塞等待</text>
+
+        <rect x="598" y="72" width="154" height="66" rx="11" fill="#fff" stroke="#e8c48c" stroke-width="1.4"/>
+        <text x="675" y="99" text-anchor="middle" font-size="13" font-weight="700" fill="#7c2d12">服务端节点</text>
+        <text x="675" y="119" text-anchor="middle" font-size="10.5" fill="#a89275">server · 执行并返回</text>
+
+        <line x1="164" y1="96" x2="594" y2="96" stroke="#b45309" stroke-width="2.2" marker-end="url(#sb)"/>
+        <text x="379" y="86" text-anchor="middle" font-size="11" font-weight="600" fill="#92400e">① Request 请求（发完就等，超时判失败）</text>
+
+        <line x1="598" y1="128" x2="166" y2="128" stroke="#c98a3c" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#sbd)"/>
+        <text x="379" y="148" text-anchor="middle" font-size="11" font-weight="600" fill="#a16207">② Response 结果（成功 / 失败 + 数据）</text>
+
+        <text x="379" y="188" text-anchor="middle" font-size="10.3" fill="#b0a08a">一次调用 = 一次完整往返，中间拿不到任何进度</text>
+      </svg>
+    </section>
+
+    <!-- ================= Action ================= -->
+    <section class="row" style="--c:#6d28d9; --cbg:#f3efff;">
+      <div class="info">
+        <div class="head"><span class="no">03</span><h2>Action 动作<small>Goal · Feedback · Result</small></h2></div>
+        <div class="analogy">类比：点外卖 —— 下单后能看到进度，也能中途取消</div>
+        <ul>
+          <li>面向长任务：Goal 下发 → 持续 Feedback → 最终 Result</li>
+          <li>执行中可随时 Cancel，这是 Service 做不到的</li>
+          <li>底层是拼出来的：Goal / Cancel / Result 走 Service，Feedback / Status 走 Topic</li>
+          <li>适合"几分钟起步 + 用户盯着进度 + 可能中途改主意"的任务</li>
+        </ul>
+        <div class="ex"><b>典型</b><span class="m">NavigateToPose</span><span>机械臂抓取</span><span>自动泊车</span></div>
+      </div>
+      <svg viewBox="0 0 760 215" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#6d28d9"/>
+          </marker>
+          <marker id="abd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#a78bfa"/>
+          </marker>
+        </defs>
+        <rect x="8" y="72" width="154" height="70" rx="11" fill="#fff" stroke="#d6cbf7" stroke-width="1.4"/>
+        <text x="85" y="98" text-anchor="middle" font-size="12.5" font-weight="700" fill="#4c1d95">客户端 / 任务发起方</text>
+        <text x="85" y="117" text-anchor="middle" font-size="10.3" fill="#9b8fb5">action client</text>
+        <text x="85" y="132" text-anchor="middle" font-size="10.3" fill="#9b8fb5">上位机 · 行为树</text>
+
+        <rect x="598" y="72" width="154" height="70" rx="11" fill="#fff" stroke="#d6cbf7" stroke-width="1.4"/>
+        <text x="675" y="98" text-anchor="middle" font-size="12.5" font-weight="700" fill="#4c1d95">Action Server</text>
+        <text x="675" y="117" text-anchor="middle" font-size="10.3" fill="#9b8fb5">规划 · 控制执行器</text>
+        <text x="675" y="132" text-anchor="middle" font-size="10.3" fill="#9b8fb5">如 Nav2 / MoveIt</text>
+
+        <line x1="164" y1="34" x2="594" y2="34" stroke="#6d28d9" stroke-width="2.2" marker-end="url(#ab)"/>
+        <text x="379" y="25" text-anchor="middle" font-size="11" font-weight="600" fill="#5b21b6">① Goal 目标（开始执行）</text>
+
+        <line x1="594" y1="80" x2="166" y2="80" stroke="#a78bfa" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#abd)"/>
+        <text x="379" y="71" text-anchor="middle" font-size="11" font-weight="600" fill="#7c3aed">② Feedback 进度（高频回传，如"已完成 40%"）</text>
+
+        <line x1="164" y1="126" x2="594" y2="126" stroke="#6d28d9" stroke-width="2.2" marker-end="url(#ab)"/>
+        <text x="379" y="117" text-anchor="middle" font-size="11" font-weight="600" fill="#5b21b6">③ Cancel 取消（随时打断，Service 做不到）</text>
+
+        <line x1="594" y1="176" x2="166" y2="176" stroke="#a78bfa" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#abd)"/>
+        <text x="379" y="167" text-anchor="middle" font-size="11" font-weight="600" fill="#7c3aed">④ Result 结果（成功 / 失败 / 被取消）</text>
+
+        <text x="379" y="205" text-anchor="middle" font-size="10.3" fill="#a99cc4">实线 = 客户端发起　·　虚线 = 服务端回传</text>
+      </svg>
+    </section>
+  </div>
+
+  <div class="pick">
+    <div class="pick-title">怎么选</div>
+    <div class="pick-items">
+      <div><b>数据一直在变</b><em style="color:#2563eb">→ Topic</em><small>传感器、车辆状态、控制指令流</small></div>
+      <div><b>问一次答一次</b><em style="color:#b45309">→ Service</em><small>查询、触发、单次计算</small></div>
+      <div><b>跑很久、要进度、可能反悔</b><em style="color:#6d28d9">→ Action</em><small>导航、抓取、泊车、探索建图</small></div>
+    </div>
+  </div>
+  <div class="footnote">
+    Action 不是第四套底层协议：<b>Goal / Cancel / Result 走 Service，Feedback / Status 走 Topic</b> —— "能看进度 + 能取消"是拼出来的能力，不是新的传输方式。
+  </div>
+</body>
+</html>

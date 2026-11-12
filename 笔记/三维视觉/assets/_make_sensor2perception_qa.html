@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>传感器到感知 · 疑问记录</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { background: #eef1f6; }
+  body { font-family: "Songti SC", "Songti TC", "STSong", serif; color: #1b2432; font-size: 10.2pt; line-height: 1.75; }
+  .page { width: 210mm; height: 297mm; background: #fff; position: relative; padding: 15mm 17mm 16mm; page-break-after: always; overflow: hidden; margin: 0 auto; }
+  .page:last-child { page-break-after: auto; }
+  @media screen { .page { box-shadow: 0 1px 6px rgba(15,23,42,.12); margin-bottom: 8mm; } }
+
+  .ph { display: flex; justify-content: space-between; align-items: baseline; font-family: "PingFang SC", sans-serif;
+        font-size: 7.4pt; letter-spacing: .4px; color: #94a3b8; border-bottom: .4pt solid #e5eaf2; padding-bottom: 2.2mm; }
+  .ph b { color: #475569; font-weight: 600; }
+  .pf { position: absolute; left: 17mm; right: 17mm; bottom: 8mm; display: flex; justify-content: space-between;
+        font-family: "PingFang SC", sans-serif; font-size: 7.2pt; color: #a3aec0; border-top: .4pt solid #eef2f7; padding-top: 2mm; }
+  .pf .no { font-family: Menlo, monospace; color: #64748b; }
+
+  h2 { font-family: "PingFang SC", sans-serif; font-size: 14.5pt; font-weight: 600; color: #0f172a; margin: 4mm 0 1.6mm; }
+  h2 .n { display: inline-block; font-family: Menlo, monospace; font-size: 8.4pt; font-weight: 700; color: #1d4ed8;
+          background: #eef4ff; border: .4pt solid #c7dafc; border-radius: 1mm; padding: .6mm 1.5mm; margin-right: 2.4mm; vertical-align: 2pt; }
+  h3 { font-family: "PingFang SC", sans-serif; font-size: 10.4pt; font-weight: 600; color: #1e3a5f; margin: 3.6mm 0 .8mm; }
+  p { margin: 1.5mm 0; text-align: justify; }
+  b { font-weight: 600; color: #0f172a; }
+  em { font-style: normal; background: linear-gradient(transparent 62%, #dbeafe 62%); padding: 0 .4mm; }
+
+  table { width: 100%; border-collapse: collapse; font-family: "PingFang SC", sans-serif; font-size: 8.4pt; line-height: 1.55; margin: 2mm 0; }
+  th, td { border: .4pt solid #dbe3ee; padding: 1.5mm 2mm; vertical-align: top; text-align: left; }
+  thead th { background: #f5f8fc; color: #334155; font-weight: 600; }
+  tbody tr:nth-child(even) td { background: #fbfcfe; }
+  td.c { text-align: center; }
+
+  ul { margin: 1.4mm 0 1.4mm 4.4mm; }
+  li { margin: .6mm 0; }
+  .pts { background: #f8fafc; border: .4pt solid #e6edf6; border-left: 2.4pt solid #2563eb; border-radius: 1mm; padding: 2.2mm 3.2mm 2.2mm 1mm; margin: 2mm 0; }
+  .pts li { font-family: "PingFang SC", sans-serif; font-size: 9pt; line-height: 1.6; margin: 1mm 0; }
+  .note { background: #f6f9fd; border: .4pt solid #dbe7f6; border-left: 2.6pt solid #0d9488; border-radius: 1mm;
+          padding: 2.4mm 3.2mm; margin: 2.2mm 0; font-family: "PingFang SC", sans-serif; font-size: 8.8pt; line-height: 1.65; }
+  .note.orange { border-left-color: #c2410c; background: #fffaf6; border-color: #f3ddcd; }
+  .quote { font-family: "PingFang SC", sans-serif; font-size: 9pt; color: #334155; background: #f8fafc;
+           border: .4pt solid #e6edf6; border-radius: 1.2mm; padding: 2.8mm 4mm; margin: 2.4mm 0; }
+  .quote b { color: #1d4ed8; }
+  .ans { font-family: "PingFang SC", sans-serif; font-size: 9.4pt; background: #eff6ff; border: .4pt solid #c7dafc;
+         border-left: 2.6pt solid #1d4ed8; border-radius: 1mm; padding: 2.6mm 3.4mm; margin: 2mm 0; line-height: 1.7; }
+  code { font-family: "SF Mono", Menlo, monospace; font-size: 8.6pt; background: #f1f5f9; padding: .2mm .8mm; border-radius: .8mm; }
+  pre { font-family: "SF Mono", Menlo, monospace; font-size: 7.6pt; line-height: 1.6; background: #f7f9fc;
+        border: .4pt solid #e3eaf3; border-left: 2.4pt solid #2563eb; border-radius: 1mm; padding: 2.2mm 3.2mm; margin: 2mm 0; white-space: pre-wrap; }
+
+  .cover { padding: 20mm 20mm 16mm; }
+  .kicker { font-family: "PingFang SC", sans-serif; font-size: 8pt; letter-spacing: 2px; color: #2563eb; font-weight: 600; }
+  .cover h1 { font-family: "PingFang SC", sans-serif; font-size: 27pt; font-weight: 700; line-height: 1.32; margin: 4mm 0 3mm; color: #0b1220; }
+  .cover .sub { font-family: "PingFang SC", sans-serif; font-size: 11pt; color: #64748b; letter-spacing: .3px; }
+  .rule { height: 1.2pt; background: #0f172a; margin: 6mm 0 5mm; width: 30mm; }
+  .cover .lead { font-size: 10pt; line-height: 1.9; color: #24303f; }
+  .cover .meta { position: absolute; left: 20mm; right: 20mm; bottom: 16mm; font-family: "PingFang SC", sans-serif;
+                 font-size: 7.6pt; color: #94a3b8; display: flex; justify-content: space-between; border-top: .4pt solid #e6edf6; padding-top: 2.4mm; }
+  .cover .qlist { margin-top: 8mm; font-family: "PingFang SC", sans-serif; font-size: 9pt; color: #475569; line-height: 2; }
+  .cover .qlist span { color: #1d4ed8; font-family: Menlo, monospace; margin-right: 2mm; }
+  .toc { margin-top: 9mm; font-family: "PingFang SC", sans-serif; font-size: 9pt; color: #334155; }
+  .toc div { display: flex; align-items: baseline; border-bottom: .3pt dotted #dbe3ee; padding: 1.7mm 0; }
+  .toc .n { width: 14mm; color: #1d4ed8; font-family: Menlo, monospace; font-size: 8.2pt; font-weight: 700; }
+  .toc .t { flex: 1; }
+  .toc .p { color: #94a3b8; font-family: Menlo, monospace; font-size: 8.2pt; }
+  .howto { margin-top: 12mm; font-family: "PingFang SC", sans-serif; font-size: 8.8pt; line-height: 1.9;
+           color: #475569; background: #f8fafc; border: .4pt solid #e6edf6; border-left: 2.4pt solid #2563eb;
+           border-radius: 1mm; padding: 3mm 4mm; }
+  .howto b { display: block; color: #0f172a; font-size: 9.2pt; margin-bottom: 1.4mm; }
+</style>
+</head>
+<body>
+
+<!-- ============ 封面 ============ -->
+<section class="page cover">
+  <div class="kicker">三维视觉 · 传感器到感知</div>
+  <h1>疑问记录</h1>
+  <div class="sub">配套《从物理量到感知》架构图 · 按 Qn 顺延</div>
+  <div class="rule"></div>
+  <div class="lead">
+    这份册子不重复讲图，只记<b>追问</b>：每一条先给一句话答案，再展开“为什么”，最后写“容易记错的地方”。<br><br>
+    新问题接着往下编号，同时补进第 2 页的索引表——索引表是这本册子的唯一目录。
+  </div>
+  <div class="toc">
+    <div><span class="n">〇</span><span class="t">疑问索引：三条已答、两条预留</span><span class="p">02</span></div>
+    <div><span class="n">Q1</span><span class="t">接进系统后，是不是用户态驱动解析、再按格式发出去</span><span class="p">03</span></div>
+    <div><span class="n">Q2</span><span class="t">各做一次 rgb→车体系，重复吗？要不要中转 topic</span><span class="p">04</span></div>
+    <div><span class="n">Q3</span><span class="t">“数据增加”是不是订阅原始 topic 产出新数据</span><span class="p">05</span></div>
+    <div><span class="n">附</span><span class="t">追加模板：下一条从 Q4 开始</span><span class="p">06</span></div>
+  </div>
+
+  <div class="howto">
+    <b>怎么用这本册子</b>
+    ① 遇到新问题，先在第 2 页索引表占一行，编号顺延，不改旧号；<br>
+    ② 正文按四段式写：疑问原话 / 一句话答案 / 为什么 / 容易记错；<br>
+    ③ 改完 <code>_make_sensor2perception_qa.html</code> 重出 PDF，md 与 pdf 保持同一份内容。
+  </div>
+  <div class="meta"><span>2026-11 · 笔记 / 疑问记录</span><span>3 条已答 · 持续追加</span></div>
+</section>
+
+<!-- ============ 索引 ============ -->
+<section class="page">
+  <div class="ph"><span><b>疑问记录</b> · 传感器到感知</span><span>〇、索引</span></div>
+
+  <h2><span class="n">〇</span>疑问索引（先看这张表）</h2>
+  <p>每条疑问一个编号，编号只增不改。答案一律“一句话结论 + 展开 + 容易记错”三段式，和图的七段结构对齐。</p>
+
+  <table>
+    <thead><tr><th style="width:8%">Q</th><th style="width:34%">疑问（原话的意思）</th><th style="width:34%">一句话答案</th><th>落在图的哪一列</th></tr></thead>
+    <tbody>
+      <tr><td class="c">1</td><td>接进系统后，是不是用户态驱动解析、再按格式发出去</td><td>方向对，但漏了 ③ 内核；“用户态驱动”要拆成解析与发布两半</td><td>③ / ④⑤</td></tr>
+      <tr><td class="c">2</td><td>两个下游各做一次 rgb→车体系，是否重复；要不要中转 topic</td><td>会重复，但“rgb→车体系”不成立；消除重复靠 TF，不靠搬数据</td><td>对齐</td></tr>
+      <tr><td class="c">3</td><td>数据增加（几何 / 预测）是不是订阅原始 topic 产出新数据</td><td>是派生，不是增广；分五类，可信度依次降低</td><td>派生</td></tr>
+      <tr><td class="c">4</td><td style="color:#b6c2d2">（待补）</td><td style="color:#b6c2d2">—</td><td style="color:#b6c2d2">—</td></tr>
+      <tr><td class="c">5</td><td style="color:#b6c2d2">（待补）</td><td style="color:#b6c2d2">—</td><td style="color:#b6c2d2">—</td></tr>
+    </tbody>
+  </table>
+
+  <div class="quote">
+    <b>三条贯穿始终的判断</b><br>
+    ① 物理线不会直连用户态，中间永远有内核把电平收成字节；<br>
+    ② 坐标变换不靠搬数据，靠一份外参；<br>
+    ③ 派生不是“凭空多出信息”，而是换表示、注先验或融合独立源。
+  </div>
+
+  <div class="note">
+    <b>和《架构讲解》的分工</b>：讲解册回答“这张图在说什么”，本册只回答“我卡在哪”。同一个问题如果最后长成一节完整的方法论，再迁回讲解册，这里只留结论和指针。
+  </div>
+
+  <div class="pf"><span>传感器到感知 · 疑问记录</span><span class="no">02</span></div>
+</section>
+
+<!-- ============ Q1 ============ -->
+<section class="page">
+  <div class="ph"><span><b>疑问记录</b> · 传感器到感知</span><span>Q1 · 用户态驱动解析</span></div>
+
+  <h2><span class="n">Q1</span>接进系统后，是不是用户态驱动解析、再按格式发出去？</h2>
+
+  <div class="ans">
+    <b>一句话答案</b>：方向对，但漏了 ③ 内核这一层；而且“用户态驱动”要拆成两半——<b>④ 解析</b>和<b>⑤ 发布</b>，不同传感器在这两段里的份量完全不同。
+  </div>
+
+  <h3>为什么</h3>
+  <p>物理线不会直接进用户态。CAN 进的是 <code>netdev</code>，相机进的是 <code>V4L2</code>，激光雷达进的是 <code>socket</code>——你写的节点第一行代码永远是 <code>open()</code> 或 <code>socket()</code>，拿到的是 fd，不是电平。中间那条 syscall 边界，就是图上的橙虚线。</p>
+  <p>至于“解析”发生在哪，五类传感器各有不同：</p>
+  <ul>
+    <li><b>相机</b>：ISP（去马赛克、曝光）在 ③ 或专用硬件里就结束了，用户态只做格式转换、打戳、发布，且多半走零拷贝；</li>
+    <li><b>CAN</b>：帧解析在内核（SocketCAN），信号语义（DBC）常在中间件，两者都不是“驱动”干的；</li>
+    <li><b>激光雷达 / 毫米波</b>：私有协议的解包确实在用户态 SDK 里，这一类最贴合你原本的说法。</li>
+  </ul>
+
+  <h3>容易记错</h3>
+  <p>把“按格式发出去”理解成驱动随手拼一个结构体。实际是：格式是<b>契约</b>（<code>.msg</code> / IDL），由 ⑤ 适配层序列化；驱动只负责把字节翻译成带 <code>stamp</code> 和 <code>frame_id</code> 的测量，不做融合、不做理解。</p>
+
+  <div class="note">
+    <b>判据</b>：把 ROS 拔掉，它还能单独跑、还能吐数据吗？能 → 里面有一颗驱动核；不能 → 是“驱动 + 适配”揉在一起。
+  </div>
+
+  <div class="pf"><span>传感器到感知 · 疑问记录</span><span class="no">03</span></div>
+</section>
+
+<!-- ============ Q2 ============ -->
+<section class="page">
+  <div class="ph"><span><b>疑问记录</b> · 传感器到感知</span><span>Q2 · 坐标变换与中转 topic</span></div>
+
+  <h2><span class="n">Q2</span>两个下游各做一次 rgb→车体系，重复了吗？要不要中转 topic？</h2>
+
+  <div class="ans">
+    <b>一句话答案</b>：会重复，但“rgb→车体系变换”这个说法本身不成立——图像侧是投影 / 采样，不是刚体变换；消除重复的做法是<b>一份 TF</b>，不是搬一份数据。
+  </div>
+
+  <h3>为什么</h3>
+  <p><b>点云</b>可以乘一个 4×4 刚体矩阵换到车体系；<b>图像</b>不行，像素没有深度，无法旋转平移。BEV 里的方向是反的：把 BEV 网格上的 3D 点投影到图像平面去采样特征（LSS 的 lift-splat、BEVFormer 的 reference point）。这叫 view transform，不叫坐标变换。</p>
+  <p>所以“两个模块各变一次”要改成：两个模块各做了一次特征提升。真正被重复的是 GPU 上的 lift 计算，不是矩阵乘法。</p>
+
+  <table>
+    <thead><tr><th style="width:24%">手段</th><th style="width:40%">适合什么</th><th>代价</th></tr></thead>
+    <tbody>
+      <tr><td>TF 树（static + dynamic）</td><td>外参、位姿；点云 / 目标换系</td><td>几乎为零，默认选它</td></tr>
+      <tr><td>预处理 topic</td><td>去畸变、deskew、同步打包</td><td>多一跳，只做一次</td></tr>
+      <tr><td>共享内存 / 零拷贝</td><td>多下游共享同一份大结果</td><td>实现复杂，跨机不可用</td></tr>
+    </tbody>
+  </table>
+
+  <h3>容易记错</h3>
+  <p>① 以为可以 publish 一张“ego 系的图像”——不存在；能中转的只有去畸变后的图像，它仍在相机系。<br>
+  ② 中转节点重新打时间戳——变换不改变采样时刻，时间戳必须原样透传。<br>
+  ③ 以为贵在矩阵乘法——10 万点的 4×4 是亚毫秒级；贵的是 6 MB 图像过 topic（单路 180 MB/s）。重复该消的是<b>带宽</b>，不是算力。</p>
+
+  <div class="note orange">
+    <b>另一个更隐蔽的坑</b>：两个模块都“变到了 BEV”，但一个 ego-centric、一个 world-centric，网格分辨率也不同。外参再准也叠不上。统一表示的定义必须全局唯一。
+  </div>
+
+  <div class="pf"><span>传感器到感知 · 疑问记录</span><span class="no">04</span></div>
+</section>
+
+<!-- ============ Q3 ============ -->
+<section class="page">
+  <div class="ph"><span><b>疑问记录</b> · 传感器到感知</span><span>Q3 · 数据派生</span></div>
+
+  <h2><span class="n">Q3</span>“数据增加”是不是订阅原始 topic 产出新数据？算不算增广？</h2>
+
+  <div class="ans">
+    <b>一句话答案</b>：这个形态成立，但它叫<b>派生</b>（derived data），不叫增广；而且按信息从哪来，要分五类，不是“几何 + 预测”两类。
+  </div>
+
+  <h3>五类，不是两类</h3>
+  <table>
+    <thead><tr><th style="width:14%">类型</th><th style="width:40%">例子</th><th>信息从哪来</th></tr></thead>
+    <tbody>
+      <tr><td>几何</td><td>双目视差、三角化、IPM、range image</td><td>已有观测的重新组织，几乎不增信息</td></tr>
+      <tr><td>学习</td><td>单目深度、光流、分割、occupancy</td><td>训练集注入的先验，有偏</td></tr>
+      <tr><td>规则 / 物理</td><td>轮速+IMU→里程计、GNSS+IMU→组合</td><td>运动学约束，误差随时间累积</td></tr>
+      <tr><td>多源融合</td><td>前 / 后 / 特征级融合、伪点云</td><td>唯一真正增加信息的（要求源独立）</td></tr>
+      <tr><td>元数据</td><td>置信度、质量分、有效 mask、尺度因子</td><td>对数据本身的评估，跟随主数据</td></tr>
+    </tbody>
+  </table>
+
+  <h3>最容易漏的一条：尺度</h3>
+  <p>单目深度模型输出多是<b>相对深度 / 逆深度</b>，没有绝对尺度，直接当米用就是全错；要靠已知基线、已知物体尺寸、地面假设，或与 LiDAR / 轮速对齐求 scale。双目则受 <code>σZ = Z²/(fB)·σd</code> 约束，误差随距离平方增长：f=1000 px、B=0.5 m、Z=50 m 时，0.5 px 视差误差 ≈ 2.5 m 距离误差。</p>
+
+  <h3>容易记错</h3>
+  <p>① 把学习派生的输出当<b>独立观测</b>——它和 LiDAR 的误差不独立，两个误差会同向灌进状态估计。<br>
+  ② 把时间戳打成“推断完成时刻”——派生量描述的是输入那一刻的场景，时间戳必须继承输入；推断耗时另记 <code>latency</code>。<br>
+  ③ 用派生数据训练新模型、再派生数据——伪标签自举会让误差固化，需要 teacher 与一致性检查。</p>
+
+  <div class="pf"><span>传感器到感知 · 疑问记录</span><span class="no">05</span></div>
+</section>
+
+<!-- ============ 模板 ============ -->
+<section class="page">
+  <div class="ph"><span><b>疑问记录</b> · 传感器到感知</span><span>附：追加模板</span></div>
+
+  <h2><span class="n">附</span>怎么记下一条</h2>
+
+  <p>新问题接着 Q4 往下编号，同时补进第 2 页索引表。一条一节，固定四块：</p>
+
+  <pre>Qn：用一句话写下疑问（用你自己的原话，不要改写成术语）
+
+一句话答案：**……**（加粗，先给结论，不超过两行）
+
+为什么：
+  - 第一层原因……
+  - 第二层原因……
+  - 图上的哪一格对应它
+
+容易记错：
+  - 反直觉的点一
+  - 反直觉的点二</pre>
+
+  <h3>四条写作纪律</h3>
+  <ul class="pts">
+    <li>先结论后展开，不写“随着……的发展”这类铺垫；</li>
+    <li>必须回答“为什么”，不能只复述定义；</li>
+    <li>必须写“容易记错”，这条比答案本身更值钱；</li>
+    <li>答案里能落到图上的，写明是哪一列哪一行。</li>
+  </ul>
+
+  <h3>文件</h3>
+  <table>
+    <thead><tr><th style="width:56%">文件</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td><code>2026-11-传感器到感知-疑问记录.md / .pdf</code></td><td>本册</td></tr>
+      <tr><td><code>2026-11-传感器到感知-架构讲解.md / .pdf</code></td><td>配套讲解册</td></tr>
+      <tr><td><code>assets/_make_sensor2perception_qa.html</code></td><td>本册 PDF 的排版源</td></tr>
+      <tr><td><code>assets/2026-11-传感器到感知-图1-从物理量到感知.png</code></td><td>图 1</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    改完 <code>.html</code> 后重出 PDF：<br>
+    <code>cd 笔记/三维视觉/assets &amp;&amp; ./_render_sensor2perception.sh pdf</code>
+  </div>
+
+  <div class="pf"><span>传感器到感知 · 疑问记录</span><span class="no">06</span></div>
+</section>
+
+</body>
+</html>

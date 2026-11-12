@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>自动驾驶传感器链路 · 读图说明</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { background: #eef1f6; }
+  body { font-family: "Songti SC", "Songti TC", "STSong", serif; color: #1b2432; font-size: 10.2pt; line-height: 1.75; }
+  .page { width: 210mm; height: 297mm; background: #fff; position: relative; padding: 15mm 17mm 16mm; page-break-after: always; overflow: hidden; margin: 0 auto; }
+  .page:last-child { page-break-after: auto; }
+  @media screen { .page { box-shadow: 0 1px 6px rgba(15,23,42,.12); margin-bottom: 8mm; } }
+
+  .ph { display: flex; justify-content: space-between; align-items: baseline; font-family: "PingFang SC", sans-serif;
+        font-size: 7.4pt; letter-spacing: .4px; color: #94a3b8; border-bottom: .4pt solid #e5eaf2; padding-bottom: 2.2mm; }
+  .ph b { color: #475569; font-weight: 600; }
+  .pf { position: absolute; left: 17mm; right: 17mm; bottom: 8mm; display: flex; justify-content: space-between;
+        font-family: "PingFang SC", sans-serif; font-size: 7.2pt; color: #a3aec0; border-top: .4pt solid #eef2f7; padding-top: 2mm; }
+  .pf .no { font-family: Menlo, monospace; color: #64748b; }
+
+  h2 { font-family: "PingFang SC", sans-serif; font-size: 14.5pt; font-weight: 600; color: #0f172a; margin: 4mm 0 1.6mm; }
+  h2 .n { display: inline-block; font-family: Menlo, monospace; font-size: 8.4pt; font-weight: 700; color: #1d4ed8;
+          background: #eef4ff; border: .4pt solid #c7dafc; border-radius: 1mm; padding: .6mm 1.5mm; margin-right: 2.4mm; vertical-align: 2pt; }
+  h3 { font-family: "PingFang SC", sans-serif; font-size: 10.4pt; font-weight: 600; color: #1e3a5f; margin: 3.6mm 0 .8mm; }
+  p { margin: 1.5mm 0; text-align: justify; }
+  b { font-weight: 600; color: #0f172a; }
+  em { font-style: normal; background: linear-gradient(transparent 62%, #dbeafe 62%); padding: 0 .4mm; }
+
+  figure { margin: 1.6mm 0 2mm; }
+  figure img { width: 100%; display: block; border: .4pt solid #e2e8f0; border-radius: 1.2mm; }
+  figcaption { font-family: "PingFang SC", sans-serif; font-size: 7.6pt; color: #94a3b8; margin-top: 1.4mm; }
+
+  table { width: 100%; border-collapse: collapse; font-family: "PingFang SC", sans-serif; font-size: 8.4pt; line-height: 1.55; margin: 2mm 0; }
+  th, td { border: .4pt solid #dbe3ee; padding: 1.5mm 2mm; vertical-align: top; text-align: left; }
+  thead th { background: #f5f8fc; color: #334155; font-weight: 600; }
+  tbody tr:nth-child(even) td { background: #fbfcfe; }
+  td.c { text-align: center; }
+
+  ul { margin: 1.4mm 0 1.4mm 4.4mm; }
+  li { margin: .6mm 0; }
+  .pts { background: #f8fafc; border: .4pt solid #e6edf6; border-left: 2.4pt solid #2563eb; border-radius: 1mm; padding: 2.2mm 3.2mm 2.2mm 1mm; margin: 2mm 0; }
+  .pts li { font-family: "PingFang SC", sans-serif; font-size: 9pt; line-height: 1.6; margin: 1mm 0; }
+  .note { background: #f6f9fd; border: .4pt solid #dbe7f6; border-left: 2.6pt solid #0d9488; border-radius: 1mm;
+          padding: 2.4mm 3.2mm; margin: 2.2mm 0; font-family: "PingFang SC", sans-serif; font-size: 8.8pt; line-height: 1.65; }
+  .note.orange { border-left-color: #c2410c; background: #fffaf6; border-color: #f3ddcd; }
+  .quote { font-family: "PingFang SC", sans-serif; font-size: 9pt; color: #334155; background: #f8fafc;
+           border: .4pt solid #e6edf6; border-radius: 1.2mm; padding: 2.8mm 4mm; margin: 2.4mm 0; }
+  .quote b { color: #1d4ed8; }
+  code { font-family: "SF Mono", Menlo, monospace; font-size: 8.6pt; background: #f1f5f9; padding: .2mm .8mm; border-radius: .8mm; }
+  pre { font-family: "SF Mono", Menlo, monospace; font-size: 7.6pt; line-height: 1.6; background: #f7f9fc;
+        border: .4pt solid #e3eaf3; border-left: 2.4pt solid #2563eb; border-radius: 1mm; padding: 2.2mm 3.2mm; margin: 2mm 0; white-space: pre-wrap; }
+
+  /* cover */
+  .cover { padding: 20mm 20mm 16mm; }
+  .kicker { font-family: "PingFang SC", sans-serif; font-size: 8pt; letter-spacing: 2px; color: #2563eb; font-weight: 600; }
+  .cover h1 { font-family: "PingFang SC", sans-serif; font-size: 27pt; font-weight: 700; line-height: 1.32; margin: 4mm 0 3mm; color: #0b1220; }
+  .cover .sub { font-family: "PingFang SC", sans-serif; font-size: 11pt; color: #64748b; letter-spacing: .3px; }
+  .rule { height: 1.2pt; background: #0f172a; margin: 6mm 0 5mm; width: 30mm; }
+  .cover .lead { font-size: 10pt; line-height: 1.9; color: #24303f; }
+  .cover .thumbs { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; margin-top: 6mm; }
+  .cover .thumbs img { width: 100%; border: .4pt solid #e2e8f0; border-radius: 1mm; display: block; }
+  .cover .meta { position: absolute; left: 20mm; right: 20mm; bottom: 16mm; font-family: "PingFang SC", sans-serif;
+                 font-size: 7.6pt; color: #94a3b8; display: flex; justify-content: space-between; border-top: .4pt solid #e6edf6; padding-top: 2.4mm; }
+</style>
+</head>
+<body>
+
+<!-- ================= 封面 ================= -->
+<section class="page cover">
+  <div class="kicker">三维视觉 · 自动驾驶传感器链路</div>
+  <h1>从物理量<br>到一条 Topic</h1>
+  <div class="sub">自动驾驶传感器链路 · 四张图的读法</div>
+  <div class="rule"></div>
+  <div class="lead">
+    一颗传感器把物理量变成字节，内核把字节变成 fd，驱动把字节变成<em>带时间戳的消息</em>，ROS 再把消息送到下游。<br><br>
+    这四张图分别回答：有哪些传感器、数据经过谁的手、八条具体链路怎么接、不同步的时间怎么对齐。核心只有一句——<b>驱动只做翻译，不做理解</b>。
+  </div>
+  <div class="thumbs">
+    <img src="./自动驾驶-传感器链路-图1-传感器全景.png" alt="">
+    <img src="./自动驾驶-传感器链路-图3-八条链路.png" alt="">
+    <img src="./自动驾驶-传感器链路-图2-五步流水线.png" alt="">
+    <img src="./自动驾驶-传感器链路-图4-时间同步.png" alt="">
+  </div>
+  <p style="margin-top:6mm; font-family:'PingFang SC',sans-serif; font-size:8.4pt; color:#64748b; line-height:1.75;">
+    四张图按“总量 → 分段 → 落地 → 时间”排列。第 4–5 页是本次重点：驱动节点到底站在哪一段，以及它算不算硬件驱动。
+  </p>
+  <div class="meta"><span>2026-11 · 笔记 / 读图说明</span><span>4 张图 · 9 页</span></div>
+</section>
+
+<!-- ================= 总览 ================= -->
+<section class="page">
+  <div class="ph"><span><b>传感器链路</b> · 读图说明</span><span>〇、四张图一览</span></div>
+
+  <h2><span class="n">〇</span>四张图各回答什么</h2>
+  <p>先看表，再看图。四张图是一套：图 1 定“有哪些、多大量”，图 2 定“分几段、谁负责”，图 3 把图 2 的每一格落到具体硬件，图 4 处理图 2 尾段留下的时间问题。</p>
+
+  <table>
+    <thead><tr><th style="width:9%">#</th><th style="width:30%">回答的问题</th><th>一句话结论</th></tr></thead>
+    <tbody>
+      <tr><td class="c">1</td><td>谁在产生什么数据</td><td>四类传感器，数据量差 500 倍；线路是被数据量选的</td></tr>
+      <tr><td class="c">2</td><td>一份数据经过谁的手</td><td>五步里只有 ④⑤ 是你的代码，③ 与 ④ 之间是内核边界</td></tr>
+      <tr><td class="c">3</td><td>每颗传感器具体怎么接</td><td>八条链路，左边硬件与协议，右边驱动与 Topic</td></tr>
+      <tr><td class="c">4</td><td>不同步怎么对齐</td><td>打戳、凑对、对表、预测，四层缺一不可</td></tr>
+    </tbody>
+  </table>
+
+  <div class="quote">
+    <b>一条主线</b>：物理量 → 字节（①–③）→ 带时间戳的消息（④–⑤）→ 对齐后的多模态帧（图 4）→ 下游感知。<br>
+    <b>一句话</b>：驱动只做翻译，不做理解；同步不在总线上，在订阅端和算法层。
+  </div>
+
+  <h3>为什么把“驱动边界”单独拎出来</h3>
+  <p>“传感器驱动会解析数据然后发 topic 吗，还是有一个中间节点统一监听？”这个问题看起来是在问架构，实际是在问<b>责任边界</b>。边界不清，会同时出现两种错：把驱动当应用（于是不敢在容器里跑、不敢重启），或把驱动当内核（于是把所有协议栈塞进一个进程）。</p>
+  <p>图 2 把这条边界画成了 ③ 与 ④ 之间的虚线，本册第 4–5 页专门解释它：<b>ROS 驱动节点 = ④ 解析 + ⑤ 发布</b>，它站在 ③ 交出的 fd 上，属于驱动栈，但不属于硬件驱动。</p>
+
+  <div class="note">
+    <b>读法建议</b>：先看第 3 页建立“有哪些、多大量”，再用第 4–5 页吃透五步与边界，最后按需看第 6–7 页的具体链路与时间同步。<br>
+    如果只有十分钟：图 2 → 第 5 页 → 图 4，主线就通了。
+  </div>
+
+  <h3>先统一四个词</h3>
+  <table>
+    <thead><tr><th style="width:20%">词</th><th>本册指什么</th></tr></thead>
+    <tbody>
+      <tr><td>前端</td><td>传感器内部的模拟与数字电路，把物理量变成数字量；到了这里，后面全是字节</td></tr>
+      <tr><td>域控接收</td><td>内核驱动 + 协议栈 + 设备节点，把字节变成 fd / socket 可读的数据</td></tr>
+      <tr><td>驱动节点</td><td>用户态进程：解析、打戳、填消息、publish；本册的主角</td></tr>
+      <tr><td>Topic</td><td>下游唯一需要认识的东西：msg 类型 + <code>stamp</code> + <code>frame_id</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="pf"><span>自动驾驶传感器链路 · 读图说明</span><span class="no">02</span></div>
+</section>
+
+<!-- ================= 图 1 ================= -->
+<section class="page">
+  <div class="ph"><span><b>传感器链路</b> · 读图说明</span><span>一、传感器全景</span></div>
+
+  <h2><span class="n">01</span>四类传感器：数据量决定了它只能走哪条线</h2>
+  <p>四类、十五张卡片：车外感知、底盘与本体、定位与授时、车身与能源。每张卡只写三件事——<b>输出什么、多快、走什么线</b>，这是最省事的读法。</p>
+
+  <figure>
+    <img src="./自动驾驶-传感器链路-图1-传感器全景.png" alt="图 1 · 传感器全景">
+    <figcaption>图 1 · 四类传感器并排，底部是接口带宽阶梯</figcaption>
+  </figure>
+
+  <pre>LIN 20 kbit/s → CAN 1 Mbit/s → CAN FD 8 Mbit/s → 1000BASE-T1 1 Gbit/s → GMSL2 6–10 Gbit/s
+超声波/车身开关   轮速/转角      毫米波/档位        激光/组合导航          高清相机原始图像</pre>
+
+  <ul class="pts">
+    <li><b>数据量决定线路，不是反过来。</b>摄像头单路 ~180 MB/s、激光点云 ~5–20 MB/s，这种量级只有以太网 / GMSL 接得住；几十字节的状态量留在 CAN / LIN 上最便宜、也最稳。整条阶梯差约 500 倍。</li>
+    <li><b>频率决定“谁等谁”。</b>IMU 100–1000 Hz、轮速 50–100 Hz、相机 30 Hz、GNSS 1–20 Hz——它们不可能天然同拍，图 4 就是为这件事画的。</li>
+    <li><b>组合导航是“硬件里已经融合过一次”的传感器。</b>GNSS + IMU 在模组内部就做了组合，ROS 侧只看到一个 <code>NavSatFix</code> 加一个 <code>Imu</code>，你看不见里面合了几路。所以“装了几颗”不能直接当冗余度用。</li>
+  </ul>
+
+  <div class="note">
+    <b>一个提醒</b>：别用“装了几颗”衡量感知覆盖，用“带宽 × 频率 × 冗余”。4D 毫米波补高度、超声波补近距、GNSS/RTK 补全局——它们不是替代关系，是互补关系。图 1 把“车身与能源”也列进来，就是想说明：不是所有传感器都为感知服务。
+  </div>
+
+  <div class="pf"><span>自动驾驶传感器链路 · 读图说明</span><span class="no">03</span></div>
+</section>
+
+<!-- ================= 图 2 ================= -->
+<section class="page">
+  <div class="ph"><span><b>传感器链路</b> · 读图说明</span><span>二、五步流水线</span></div>
+
+  <h2><span class="n">02</span>五步流水线：同一条链，七颗传感器各走一遍</h2>
+  <p>五步是：<b>前端 → 接口 → 域控接收 → 驱动解析 → ROS 消息</b>。纵向是阶段，横向是传感器。第 1 步决定物理含义，第 2–3 步各家完全不同，第 4–5 步几乎收敛成同一套写法。</p>
+
+  <figure>
+    <img src="./自动驾驶-传感器链路-图2-五步流水线.png" alt="图 2 · 五步流水线">
+    <figcaption>图 2 · 五步流水线，橘色虚线是内核 / 用户态边界，底部一条“驱动边界”带标出 ③④⑤ 的归属</figcaption>
+  </figure>
+
+  <ul class="pts">
+    <li><b>① 前端不可替代</b>：驱动拿到的已经是字节，物理量的“翻译”只能发生在传感器里。</li>
+    <li><b>② 中段各显神通</b>：以太网、GMSL、LIN、SPI、串口、CAN——这一段由硬件决定，是硬件工程师的战场。</li>
+    <li><b>③ 尾段高度统一</b>：进入驱动节点后，全部收敛成“解析 → 打戳 → 发 Topic”，下游只认消息类型。</li>
+  </ul>
+
+  <div class="note">
+    <b>读图顺序</b>：先横着读一行（一颗传感器的全程），再竖着读一列（同一阶段七颗传感器的差异）。横读看“这条链通不通”，竖读看“这一步各家差多少”。第 ⑤ 列是契约：msg 类型 + topic 名，下游只认这两样。
+  </div>
+
+  <div class="pf"><span>自动驾驶传感器链路 · 读图说明</span><span class="no">04</span></div>
+</section>
+
+<!-- ================= 驱动边界 ================= -->
+<section class="page">
+  <div class="ph"><span><b>传感器链路</b> · 读图说明</span><span>三、驱动边界</span></div>
+
+  <h2><span class="n">03</span>驱动边界：③ 与 ④ 之间那条虚线</h2>
+  <p>图 2 底部那条带子标的是整张图最重要的一条边界：<b>③ 及左边的一切在传感器、线缆和内核里；④⑤ 才是你写的 ROS 驱动节点。</b></p>
+
+  <table>
+    <thead><tr><th style="width:16%">列</th><th style="width:22%">实际归属</th><th>典型形态</th><th style="width:18%">换它要动谁</th></tr></thead>
+    <tbody>
+      <tr><td>① 传感器前端</td><td>传感器固件 + 模拟前端</td><td>APD/TDC、CMOS+ISP、MEMS+ADC</td><td>换传感器</td></tr>
+      <tr><td>② 接口与协议</td><td>物理层 / 链路层</td><td>GMSL2、CAN、LIN、SPI、UART、以太网</td><td>换线束 / 收发器</td></tr>
+      <tr><td>③ 域控接收</td><td><b>内核驱动 + 协议栈 + 设备节点</b></td><td>V4L2、SocketCAN、tty、spidev、socket</td><td>内核 / 驱动模块</td></tr>
+      <tr><td>④ 驱动解析</td><td><b>用户态驱动</b></td><td>解包、标定、坐标变换、打戳</td><td>换 SDK / 改节点</td></tr>
+      <tr><td>⑤ ROS 消息</td><td><b>适配层</b></td><td>msg 类型、<code>frame_id</code>、QoS、publish</td><td>换消息类型</td></tr>
+    </tbody>
+  </table>
+
+  <pre>open("/dev/video0") / ioctl(VIDIOC_DQBUF)      ← ③ 的出口：拿到 fd
+recvfrom(sock) / read(can_fd) / read(spi_fd)
+────────────────────── syscall 边界 ──────────────────────
+parse(buf) → points | image | frame            ← ④
+stamp = driver_time                            ← ④
+publish(topic, msg)                            ← ⑤</pre>
+
+  <h3>那它到底算不算硬件驱动的一部分？</h3>
+  <p><b>广义：算。</b>它是驱动栈的用户态那半截，干的是协议解析、设备状态机、错误恢复、打时间戳这些“驱动该干的活”。Linux 本来就有用户态驱动的传统（<code>i2c-dev</code>、<code>spidev</code>、<code>libusb</code>、UIO）——内核只给字节流，私有协议只能由用户态接管。</p>
+  <p><b>严格：不算。</b>它不持有设备、不在特权层、能在容器里跑、能被 <code>rosbag play</code> 顶替。这四条都是“应用”的特征，不是“驱动”的特征。</p>
+
+  <div class="quote">
+    <b>判据</b>：把 ROS 拔掉，它还能单独跑、还能把数据吐出来吗？<br>
+    能 → 里面有一颗驱动核（如 livox SDK、librealsense），ROS 节点只是外壳；<br>
+    不能 → 它是“驱动 + 适配”揉在一起，别当纯应用，也别当纯驱动。
+  </div>
+
+  <div class="note orange">
+    <b>工程建议</b>：复杂传感器拆成 <code>driver_core</code>（不依赖 ROS 的库，可单测）+ <code>ros_node</code>（薄壳：参数、msg 转换、QoS、生命周期）。这样“算不算驱动”就不再是语义争论——core 是驱动，node 是适配层。
+  </div>
+
+  <h3>④ 里哪些能挪走、哪些不能</h3>
+  <ul class="pts">
+    <li><b>必须留在 ④</b>：协议解析、打戳。挪走就丢了原始时间基准和 frame 语义，图 4 的配对全部失准。</li>
+    <li><b>可以挪到下游</b>：坐标变换（传感器 → 车体）、LLA → ENU。很多栈把这两步放到 TF / 转换节点，驱动只发原始测量。</li>
+    <li><b>不该进 ④</b>：融合、感知、跟踪。驱动只翻译，不理解——这句话在第 8 页还会出现一次。</li>
+  </ul>
+
+  <div class="pf"><span>自动驾驶传感器链路 · 读图说明</span><span class="no">05</span></div>
+</section>
+
+<!-- ================= 图 3 ================= -->
+<section class="page">
+  <div class="ph"><span><b>传感器链路</b> · 读图说明</span><span>四、八条链路</span></div>
+
+  <h2><span class="n">04</span>八条链路：左边硬件与协议，右边驱动与 Topic</h2>
+  <p>八条依次是：激光雷达、摄像头、毫米波雷达、超声波、IMU、GNSS/RTK、底盘 CAN、车身网络。同一套五步，换八种“物理层”各走一遍。</p>
+
+  <figure>
+    <img src="./自动驾驶-传感器链路-图3-八条链路.png" alt="图 3 · 八条链路">
+    <figcaption>图 3 · 八条链路对照：输出什么 → 物理接口 → 域控怎么收 → 驱动节点与 Topic</figcaption>
+  </figure>
+
+  <ul class="pts">
+    <li><b>数据量决定线。</b>超过 ~10 MB/s 的图像、点云必然走以太网或 GMSL；几字节的状态量继续留在 CAN / LIN。</li>
+    <li><b>实时性决定优先级。</b>刹车、转角这类控制量优先级最高；车身信号可以等，但不能挤占安全帧。</li>
+    <li><b>驱动节点是唯一的翻译官。</b>再花哨的物理层，进了域控都收敛成“解析 → 打戳 → 发 Topic”，下游只认消息类型。</li>
+  </ul>
+
+  <div class="note">
+    <b>读法</b>：左边三列（输出什么 / 物理接口 / 域控怎么收）是硬件工程师的战场，右边一列（驱动节点 → ROS 消息）是软件接入点。注意“域控怎么收”就是图 2 的 ③ 列——两图是同一件事的两种切法：图 2 按阶段切，图 3 按传感器切。
+  </div>
+
+  <h3>八条链路的常见实现（示例，实际项目多自研）</h3>
+  <table>
+    <thead><tr><th style="width:22%">传感器</th><th style="width:40%">常见驱动节点</th><th>依赖 / 解析表</th></tr></thead>
+    <tbody>
+      <tr><td>激光雷达</td><td>velodyne_driver / robosense_ros / livox_ros_driver2</td><td>厂商 SDK、UDP 协议</td></tr>
+      <tr><td>摄像头</td><td>usb_cam / v4l2_camera / camera_ros</td><td>V4L2、GStreamer</td></tr>
+      <tr><td>毫米波</td><td>厂商 CAN 驱动 / 自研 radar_driver</td><td>DBC 文件</td></tr>
+      <tr><td>超声波</td><td>自研 LIN→CAN 汇聚节点</td><td>探头 ID 表</td></tr>
+      <tr><td>IMU</td><td>厂商驱动 / imu_tools</td><td>spidev、标定参数</td></tr>
+      <tr><td>GNSS</td><td>nmea_navsat_driver / ublox_dgnss</td><td>NMEA / UBX</td></tr>
+      <tr><td>底盘 / 车身</td><td>ros2_socketcan、自研网关节点</td><td>DBC 文件</td></tr>
+    </tbody>
+  </table>
+
+  <div class="pf"><span>自动驾驶传感器链路 · 读图说明</span><span class="no">06</span></div>
+</section>
+
+<!-- ================= 图 4 ================= -->
+<section class="page">
+  <div class="ph"><span><b>传感器链路</b> · 读图说明</span><span>五、时间同步</span></div>
+
+  <h2><span class="n">05</span>时间同步：三个频率、三个相位，怎么凑成同一帧</h2>
+  <p>轮速 100 Hz、IMU 200 Hz、相机 30 Hz。想取 t = 40 ms 那一刻，相机最近一帧落后 7 ms——<b>“同一时刻”在硬件世界里根本不存在</b>。</p>
+
+  <figure>
+    <img src="./自动驾驶-传感器链路-图4-时间同步.png" alt="图 4 · 时间同步">
+    <figcaption>图 4 · 时间同步四层：时间轴 → 软件凑对 → 硬件对表 → 算法预测</figcaption>
+  </figure>
+
+  <ul class="pts">
+    <li><b>01 时间轴</b>：三条频率不同、相位不同的采样序列，以及“想取的那刻”落在哪里。</li>
+    <li><b>02 软件层</b>：<code>message_filters</code> 在缓冲区里“凑一对”，<code>|Δt| ≤ 10 ms</code>；慢的那条决定配对节奏，代价是延迟。</li>
+    <li><b>03 硬件层</b>：PPS 秒脉冲（μs 级）、PTP / IEEE 1588（亚 μs 级）、硬件触发（同一微秒）。不做这层，第 2 层的时间戳本身就是错的。</li>
+    <li><b>04 算法层</b>：预测（用 IMU 推算 T1→T2 怎么动）、更新（用最新观测修正状态与协方差）、运动补偿 deskew（LiDAR 转一圈 100 ms，用同段 IMU + 轮速把点云拉回同一时刻）。</li>
+  </ul>
+
+  <div class="note">
+    <b>三个要点</b>：① 打戳必须发生在 ④，挪到订阅端就等于用“收到的时间”冒充“采样的时间”；② <code>message_filters</code> 只能“凑”不能“造”，差 7 ms 可以近似，差 70 ms 只能靠预测；③ 时钟源要统一，混用 <code>CLOCK_REALTIME</code> 与 <code>CLOCK_MONOTONIC</code> 是排查同步问题最常见的坑。
+  </div>
+
+  <h3>stamp 从哪来：四种常见做法</h3>
+  <table>
+    <thead><tr><th style="width:34%">来源</th><th style="width:20%">典型精度</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td>订阅端收到时 <code>now()</code></td><td>1–5 ms</td><td>不推荐，等于把传输延迟算进了采样时刻</td></tr>
+      <tr><td>驱动 <code>read()</code> 返回后立刻打</td><td>0.1–1 ms</td><td>入门做法，比订阅端好，但抖动仍在</td></tr>
+      <tr><td>报文自带时间戳</td><td>μs</td><td>雷达 / 相机常用；需要先对时，否则是“设备自己的时钟”</td></tr>
+      <tr><td>PTP / PPS / 硬件触发</td><td>亚 μs</td><td>多传感器融合的底线配置，图 4 第 3 层</td></tr>
+    </tbody>
+  </table>
+
+  <div class="pf"><span>自动驾驶传感器链路 · 读图说明</span><span class="no">07</span></div>
+</section>
+
+<!-- ================= 串起来 ================= -->
+<section class="page">
+  <div class="ph"><span><b>传感器链路</b> · 读图说明</span><span>六、串起来读</span></div>
+
+  <h2><span class="n">06</span>把四张图串起来读</h2>
+
+  <ul class="pts">
+    <li><b>图 1</b> 说“有哪些传感器、各自吐多少数据”；</li>
+    <li><b>图 2</b> 说“数据从物理量到 topic 分五段，哪一段是你写的”；</li>
+    <li><b>图 3</b> 说“八条具体链路的硬件与驱动怎么对应”；</li>
+    <li><b>图 4</b> 说“多颗传感器的时间怎么对齐”。</li>
+  </ul>
+
+  <div class="quote">
+    <b>如果只记一句</b>：驱动只做翻译，不做理解；同步不在总线上，在订阅端和算法层。
+  </div>
+
+  <h3>三个常见误解</h3>
+  <p><b>误解一：“驱动就是厂商 SDK / 内核 .ko”。</b>图 2 的 ③ 才是内核，④–⑤ 是用户态进程；SDK 只是 ④ 可能引用的库。把三者混为一谈，就会出现“容器里跑不了所以驱动上不了车”这类误判。</p>
+  <p><b>误解二：“有一个中间节点统一监听所有传感器”。</b>没有。每颗传感器一个驱动节点，中间是 topic 不是节点；真正存在的“中间层”只有管理框架（启停、配置、健康检查）和转发工具（relay、rosbag、bridge），它们都不解析数据。</p>
+  <p><b>误解三：“融合应该放进驱动”。</b>融合需要多源、需要时间对齐，属于下游；塞进驱动，等于把可替换的边界变成单点。驱动只负责把每一路翻译成“带 stamp 和 frame_id 的测量”，融合是订阅端的事。</p>
+
+  <h3>三个可以带走的判据</h3>
+  <p>① 谁最接近硬件、最懂协议，谁负责解析；解析完立刻变成标准消息。<br>
+  ② 拔掉 ROS 还能独立输出 → 驱动核；不能 → 适配层。<br>
+  ③ 打戳的位置决定同步的上限；坐标变换可以挪，时间戳不能挪。</p>
+
+  <h3>部署前自检（六条）</h3>
+  <ul class="pts">
+    <li>每颗传感器一个独立节点，一个挂了不拖垮其它；</li>
+    <li>每条消息都有 <code>frame_id</code>，且在 TF 树里查得到；</li>
+    <li><code>stamp</code> 在驱动里打，不晚于 <code>read()</code> 之后；</li>
+    <li>驱动里没有融合 / 感知代码；</li>
+    <li>换一颗传感器只改驱动，下游不动；</li>
+    <li>同一段数据能用 rosbag 复现。</li>
+  </ul>
+
+  <div class="pf"><span>自动驾驶传感器链路 · 读图说明</span><span class="no">08</span></div>
+</section>
+
+<!-- ================= 附 ================= -->
+<section class="page">
+  <div class="ph"><span><b>传感器链路</b> · 读图说明</span><span>七、附：文件与重出</span></div>
+
+  <h2><span class="n">07</span>附：文件与重出</h2>
+
+  <table>
+    <thead><tr><th style="width:46%">文件</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td><code>assets/自动驾驶-传感器链路-图1-传感器全景.png</code></td><td>图 1，四类传感器全景，3120×1524</td></tr>
+      <tr><td><code>assets/自动驾驶-传感器链路-图2-五步流水线.png</code></td><td>图 2，五步流水线 + 驱动边界，3120×2117（本次更新）</td></tr>
+      <tr><td><code>assets/自动驾驶-传感器链路-图3-八条链路.png</code></td><td>图 3，八条链路对照，3120×1528</td></tr>
+      <tr><td><code>assets/自动驾驶-传感器链路-图4-时间同步.png</code></td><td>图 4，时间同步四层，3120×1624</td></tr>
+      <tr><td><code>assets/_make_sensor_chain_fig2.html</code></td><td>图 2 的源文件（HTML，Chrome 无头截图出图）</td></tr>
+      <tr><td><code>assets/_render_fig2.sh</code></td><td>图 2 的一键重出脚本（截图 + 裁边）</td></tr>
+      <tr><td><code>assets/_make_sensor_chain_note.html</code></td><td>本笔记 PDF 版的排版源文件</td></tr>
+      <tr><td><code>2026-11-自动驾驶-传感器链路-读图说明.pdf</code></td><td>排版后的 A4 版本（9 页）</td></tr>
+    </tbody>
+  </table>
+
+  <h3>重出图 2</h3>
+  <pre>cd 笔记/三维视觉/assets
+./_render_fig2.sh        # 依赖 Chrome 与 Pillow，覆盖输出图 2 的 PNG</pre>
+
+  <h3>重出 PDF</h3>
+  <pre>cd 笔记/三维视觉
+CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+"$CHROME" --headless --disable-gpu --no-sandbox --no-pdf-header-footer \
+  --print-to-pdf="2026-11-自动驾驶-传感器链路-读图说明.pdf" \
+  "file://$PWD/assets/_make_sensor_chain_note.html"</pre>
+
+  <div class="note">
+    图 1 / 3 / 4 沿用同批产出的原图，本次未改动；图 2 的旧版（3120×1324，无驱动边界带）已被覆盖。若不想要那条带子，删掉 <code>_make_sensor_chain_fig2.html</code> 里的 <code>.band</code> 块和 <code>.cutcol</code> 的虚线，重跑脚本即可得到无带版本。
+  </div>
+
+  <h3>相关笔记</h3>
+  <p><code>2026-11-CAN链路-Q1-Q5</code>（总线、帧 ID、DBC 拆位）· <code>2026-11-时空同步-双轨穿插与三个耦合点</code>（时间与空间的耦合）· <code>2026-10-坐标系-传感器-IMU-GNSS与ROS工程零散点</code>（外参与坐标系）</p>
+
+  <div class="pf"><span>自动驾驶传感器链路 · 读图说明</span><span class="no">09</span></div>
+</section>
+
+</body>
+</html>

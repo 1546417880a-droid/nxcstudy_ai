@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>ROS 数据链路</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1440px; height: 920px; }
+  body {
+    font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #f7f9fc;
+    color: #0f172a;
+    padding: 34px 44px 28px;
+    display: flex; flex-direction: column;
+  }
+  .topbar { display: flex; align-items: flex-end; justify-content: space-between; }
+  h1 { font-size: 31px; font-weight: 700; letter-spacing: .2px; }
+  h1 span { color: #2563eb; }
+  .sub { font-size: 14px; color: #64748b; margin-top: 8px; }
+  .tag { font-size: 12px; color: #1d4ed8; background: #e8f0fe; border: 1px solid #c7dafc;
+         padding: 5px 11px; border-radius: 999px; font-weight: 600; letter-spacing: .3px; }
+
+  .main { display: flex; gap: 40px; margin-top: 22px; flex: 1; }
+  .flow { width: 720px; display: flex; flex-direction: column; justify-content: center; }
+  .side { width: 590px; display: flex; flex-direction: column; gap: 16px; justify-content: center; }
+
+  .node { position: relative; background: #fff; border: 1px solid #dde5ef; border-radius: 13px;
+          padding: 11px 16px 11px 18px; box-shadow: 0 1px 2px rgba(15,23,42,.05); display: flex; gap: 14px; }
+  .node::before { content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 4px;
+                  border-radius: 4px; background: var(--c, #2563eb); }
+  .idx { flex: 0 0 24px; height: 24px; border-radius: 7px; background: var(--cbg, #eef4ff);
+         color: var(--c, #2563eb); font-size: 12.5px; font-weight: 700;
+         display: flex; align-items: center; justify-content: center; margin-top: 2px; }
+  .node h3 { font-size: 15.5px; font-weight: 650; letter-spacing: .2px; }
+  .node h3 em { font-style: normal; font-size: 12px; color: #94a3b8; font-weight: 500; margin-left: 8px; }
+  .node p { font-size: 12.8px; color: #475569; margin-top: 4px; line-height: 1.5; }
+  .node .mono { font-family: "SF Mono", Menlo, monospace; font-size: 12px; color: #0f172a;
+                background: #f1f5f9; border-radius: 4px; padding: 1px 5px; }
+
+  .arrow { position: relative; height: 47px; }
+  .arrow .stem { position: absolute; left: 50%; margin-left: -1px; top: 0; bottom: 8px; width: 2px; background: #b6c2d1; }
+  .arrow .head { position: absolute; left: 50%; margin-left: -5.5px; bottom: 0; width: 0; height: 0;
+                 border-left: 5.5px solid transparent; border-right: 5.5px solid transparent; border-top: 8px solid #94a3b8; }
+  .arrow .lbl { position: absolute; left: calc(50% + 12px); top: 9px; font-size: 11.9px; color: #475569;
+                background: #f7f9fc; padding: 0 4px; line-height: 1.55; white-space: nowrap; }
+  .arrow .lbl b { color: #1d4ed8; font-weight: 600; }
+  .arrow.hl .stem { background: #2563eb; }
+  .arrow.hl .head { border-top-color: #2563eb; }
+
+  .subs { display: flex; gap: 8px; margin-top: 8px; }
+  .chip { flex: 1; text-align: center; font-size: 12.6px; color: #1e293b; background: #f8fafc;
+          border: 1px dashed #c3cddb; border-radius: 9px; padding: 7px 4px; }
+  .chip b { display: block; font-size: 12.8px; }
+  .chip small { color: #94a3b8; font-size: 11px; }
+
+  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 15px 18px;
+          box-shadow: 0 1px 2px rgba(15,23,42,.04); }
+  .card h2 { font-size: 13.5px; font-weight: 700; letter-spacing: .4px; color: #0f172a; }
+  .card h2 i { font-style: normal; color: #94a3b8; font-weight: 500; margin-left: 6px; font-size: 11.5px; }
+
+  .wrong, .right { display: flex; gap: 9px; font-size: 12.6px; line-height: 1.55; margin-top: 10px; }
+  .mk { flex: 0 0 18px; height: 18px; border-radius: 50%; font-size: 12px; font-weight: 700;
+        display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+  .wrong .mk { background: #fee2e2; color: #dc2626; }
+  .right .mk { background: #dcfce7; color: #16a34a; }
+  .wrong .txt { color: #64748b; }
+  .right .txt { color: #334155; }
+  .chain { font-size: 12.4px; color: #334155; margin-top: 3px; }
+  .chain code { font-family: "SF Mono", Menlo, monospace; font-size: 11.8px; background: #f1f5f9;
+                padding: 1px 5px; border-radius: 4px; }
+  .note { font-size: 11.6px; color: #94a3b8; margin-top: 8px; }
+
+  .down { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-top: 11px; }
+  .tag2 { font-size: 11.8px; background: #f1f5f9; border: 1px solid #e2e8f0; color: #334155;
+          border-radius: 7px; padding: 5px 8px; }
+  .tag2.hi { background: #eef4ff; border-color: #c7dafc; color: #1d4ed8; font-weight: 600; }
+  .sep { color: #94a3b8; font-size: 13px; }
+
+  .quote { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #fff;
+           border-radius: 14px; padding: 16px 20px; }
+  .quote .lab { font-size: 11px; letter-spacing: 1.2px; color: #93c5fd; font-weight: 700; }
+  .quote .big { font-size: 21px; font-weight: 700; margin-top: 7px; letter-spacing: .4px; }
+  .quote .small { font-size: 11.8px; color: #cbd5e1; margin-top: 7px; line-height: 1.55; }
+
+  footer { margin-top: 10px; font-size: 11.6px; color: #94a3b8; display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div>
+      <h1>ROS 数据链路：从底盘 <span>CAN 总线</span> 到规划节点</h1>
+      <div class="sub">CAN 是硬件之间的通信总线，不是流程里的一个"节点"；发布动作发生在驱动节点内部。</div>
+    </div>
+    <div class="tag">图 1 / 2 · 数据上行</div>
+  </div>
+
+  <div class="main">
+    <div class="flow">
+      <div class="node" style="--c:#0d9488; --cbg:#e6fffa;">
+        <div class="idx">1</div>
+        <div>
+          <h3>物理硬件 / 底盘 ECU <em>Hardware</em></h3>
+          <p>电机控制器、BMS 电池管理、转向角传感器、制动踏板、轮速传感器 —— 既产生状态量，也接收执行指令。</p>
+        </div>
+      </div>
+
+      <div class="arrow">
+        <div class="stem"></div><div class="head"></div>
+        <div class="lbl"><b>CAN_H / CAN_L 双绞线</b> · 差分信号<br>两端 120 Ω 终端电阻 · 常见 500 kbit/s</div>
+      </div>
+
+      <div class="node" style="--c:#0891b2; --cbg:#e0f7fb;">
+        <div class="idx">2</div>
+        <div>
+          <h3>CAN 收发器 + 接口卡 / 车载网关 <em>Bus Interface</em></h3>
+          <p>USB-CAN、PEAK PCAN、Vector VN 系列，或域控制器内的网关；厂商驱动把它注册成内核网络设备。</p>
+          <p><span class="mono">SocketCAN: can0 / can1</span> <span class="mono" style="margin-left:6px">candump</span> <span class="mono" style="margin-left:6px">cansend</span></p>
+        </div>
+      </div>
+
+      <div class="arrow">
+        <div class="stem"></div><div class="head"></div>
+        <div class="lbl"><b>recv()</b> 读原始帧：11/29 位 ID + 8 字节 payload<br>CAN FD 下最长 64 字节</div>
+      </div>
+
+      <div class="node" style="--c:#2563eb; --cbg:#eef4ff;">
+        <div class="idx">3</div>
+        <div>
+          <h3>ROS 驱动节点 <em>ROS Node · 就是发布者本身</em></h3>
+          <p>① 按 DBC 定义把字节解析成物理量（如 ID 0x123 的 byte0–1 → 车速 32.5 km/h）</p>
+          <p>② 封装为标准 ROS 消息，再调用 <span class="mono">publisher.publish(msg)</span> —— 发布是它的一个动作，不是下一跳。</p>
+        </div>
+      </div>
+
+      <div class="arrow hl">
+        <div class="stem"></div><div class="head"></div>
+        <div class="lbl"><b>publish()</b> 在本节点内完成<br>不存在"发布节点"这个中间环节</div>
+      </div>
+
+      <div class="node" style="--c:#4f46e5; --cbg:#eef0ff;">
+        <div class="idx">4</div>
+        <div>
+          <h3>ROS Topic <em>话题 · 持续广播</em></h3>
+          <p><span class="mono">/vehicle/speed</span>　<span class="mono">/vehicle/steering</span>　<span class="mono">/battery/state</span></p>
+          <p>std_msgs 标准类型或自定义 msg；QoS 决定可靠性与丢帧策略（传感器 best_effort，控制 reliable）。</p>
+        </div>
+      </div>
+
+      <div class="arrow">
+        <div class="stem"></div><div class="head"></div>
+        <div class="lbl"><b>分发</b>：同机共享内存 · 跨机 TCP/UDP<br>订阅者数量由订阅关系自动决定</div>
+      </div>
+
+      <div class="node" style="--c:#7c3aed; --cbg:#f3efff;">
+        <div class="idx">5</div>
+        <div style="flex:1;">
+          <h3>订阅者 <em>Subscribers · 一对多</em></h3>
+          <div class="subs">
+            <div class="chip"><b>规划节点</b><small>局部位姿 / 障碍</small></div>
+            <div class="chip"><b>控制节点</b><small>车速 / 转向反馈</small></div>
+            <div class="chip"><b>监控 · rosbag</b><small>记录与回放</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="card">
+        <h2>两处常见画法要修正 <i>Corrections</i></h2>
+        <div class="wrong">
+          <div class="mk">✕</div>
+          <div>
+            <div class="txt">硬件 → CAN → 驱动节点 → "ROS 节点发布" → 订阅者</div>
+            <div class="chain">把 CAN 画成独立环节，把"发布"画成另一个节点。</div>
+          </div>
+        </div>
+        <div class="right">
+          <div class="mk">✓</div>
+          <div>
+            <div class="txt">硬件 ⇄ <b>CAN 总线</b> ⇄ 接口卡 ⇄ <b>驱动节点（自己 publish）</b> → Topic → 订阅者</div>
+            <div class="chain">CAN 只是线束协议；驱动节点在 ROS 图里是一个 node，同时就是 publisher。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>反向下行：控制指令怎么落到执行器 <i>Downlink</i></h2>
+        <div class="down">
+          <span class="tag2 hi">控制节点</span><span class="sep">→</span>
+          <span class="tag2">/cmd_vel Topic</span><span class="sep">→</span>
+          <span class="tag2">驱动节点</span><span class="sep">→</span>
+          <span class="tag2">cansend</span><span class="sep">→</span>
+          <span class="tag2">CAN 帧</span><span class="sep">→</span>
+          <span class="tag2">底盘 ECU / 执行器</span>
+        </div>
+        <div class="note">上下行共用同一个驱动节点，只是收发方向不同；差速底盘上就是"订阅 /cmd_vel → 写 CAN"。</div>
+      </div>
+
+      <div class="quote">
+        <div class="lab">ONE-LINE RULE</div>
+        <div class="big">总线不是节点，节点自己发。</div>
+        <div class="small">画图时给"驱动节点"标注 <b>publish</b> 即可，不必再插入一个发布环节；<br>真正需要区分的三种通信机制，见下一张图。</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span>对应 ROS 概念：node · topic · message · publisher · subscriber · QoS</span>
+    <span>UAV Path Planning &amp; Autonomous Driving · 00_Docs/diagrams</span>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>传感器到感知 · 架构讲解</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { background: #eef1f6; }
+  body { font-family: "Songti SC", "Songti TC", "STSong", serif; color: #1b2432; font-size: 10.2pt; line-height: 1.75; }
+  .page { width: 210mm; height: 297mm; background: #fff; position: relative; padding: 15mm 17mm 16mm; page-break-after: always; overflow: hidden; margin: 0 auto; }
+  .page:last-child { page-break-after: auto; }
+  @media screen { .page { box-shadow: 0 1px 6px rgba(15,23,42,.12); margin-bottom: 8mm; } }
+
+  .ph { display: flex; justify-content: space-between; align-items: baseline; font-family: "PingFang SC", sans-serif;
+        font-size: 7.4pt; letter-spacing: .4px; color: #94a3b8; border-bottom: .4pt solid #e5eaf2; padding-bottom: 2.2mm; }
+  .ph b { color: #475569; font-weight: 600; }
+  .pf { position: absolute; left: 17mm; right: 17mm; bottom: 8mm; display: flex; justify-content: space-between;
+        font-family: "PingFang SC", sans-serif; font-size: 7.2pt; color: #a3aec0; border-top: .4pt solid #eef2f7; padding-top: 2mm; }
+  .pf .no { font-family: Menlo, monospace; color: #64748b; }
+
+  h2 { font-family: "PingFang SC", sans-serif; font-size: 14.5pt; font-weight: 600; color: #0f172a; margin: 4mm 0 1.6mm; }
+  h2 .n { display: inline-block; font-family: Menlo, monospace; font-size: 8.4pt; font-weight: 700; color: #1d4ed8;
+          background: #eef4ff; border: .4pt solid #c7dafc; border-radius: 1mm; padding: .6mm 1.5mm; margin-right: 2.4mm; vertical-align: 2pt; }
+  h3 { font-family: "PingFang SC", sans-serif; font-size: 10.4pt; font-weight: 600; color: #1e3a5f; margin: 3.6mm 0 .8mm; }
+  p { margin: 1.5mm 0; text-align: justify; }
+  b { font-weight: 600; color: #0f172a; }
+  em { font-style: normal; background: linear-gradient(transparent 62%, #dbeafe 62%); padding: 0 .4mm; }
+
+  figure { margin: 1.6mm 0 2mm; }
+  figure img { width: 100%; display: block; border: .4pt solid #e2e8f0; border-radius: 1.2mm; }
+  figcaption { font-family: "PingFang SC", sans-serif; font-size: 7.6pt; color: #94a3b8; margin-top: 1.4mm; }
+
+  table { width: 100%; border-collapse: collapse; font-family: "PingFang SC", sans-serif; font-size: 8.4pt; line-height: 1.55; margin: 2mm 0; }
+  th, td { border: .4pt solid #dbe3ee; padding: 1.5mm 2mm; vertical-align: top; text-align: left; }
+  thead th { background: #f5f8fc; color: #334155; font-weight: 600; }
+  tbody tr:nth-child(even) td { background: #fbfcfe; }
+  td.c { text-align: center; }
+
+  ul { margin: 1.4mm 0 1.4mm 4.4mm; }
+  li { margin: .6mm 0; }
+  .pts { background: #f8fafc; border: .4pt solid #e6edf6; border-left: 2.4pt solid #2563eb; border-radius: 1mm; padding: 2.2mm 3.2mm 2.2mm 1mm; margin: 2mm 0; }
+  .pts li { font-family: "PingFang SC", sans-serif; font-size: 9pt; line-height: 1.6; margin: 1mm 0; }
+  .note { background: #f6f9fd; border: .4pt solid #dbe7f6; border-left: 2.6pt solid #0d9488; border-radius: 1mm;
+          padding: 2.4mm 3.2mm; margin: 2.2mm 0; font-family: "PingFang SC", sans-serif; font-size: 8.8pt; line-height: 1.65; }
+  .note.orange { border-left-color: #c2410c; background: #fffaf6; border-color: #f3ddcd; }
+  .quote { font-family: "PingFang SC", sans-serif; font-size: 9pt; color: #334155; background: #f8fafc;
+           border: .4pt solid #e6edf6; border-radius: 1.2mm; padding: 2.8mm 4mm; margin: 2.4mm 0; }
+  .quote b { color: #1d4ed8; }
+  code { font-family: "SF Mono", Menlo, monospace; font-size: 8.6pt; background: #f1f5f9; padding: .2mm .8mm; border-radius: .8mm; }
+  pre { font-family: "SF Mono", Menlo, monospace; font-size: 7.6pt; line-height: 1.6; background: #f7f9fc;
+        border: .4pt solid #e3eaf3; border-left: 2.4pt solid #2563eb; border-radius: 1mm; padding: 2.2mm 3.2mm; margin: 2mm 0; white-space: pre-wrap; }
+
+  .cover { padding: 20mm 20mm 16mm; }
+  .kicker { font-family: "PingFang SC", sans-serif; font-size: 8pt; letter-spacing: 2px; color: #2563eb; font-weight: 600; }
+  .cover h1 { font-family: "PingFang SC", sans-serif; font-size: 27pt; font-weight: 700; line-height: 1.32; margin: 4mm 0 3mm; color: #0b1220; }
+  .cover .sub { font-family: "PingFang SC", sans-serif; font-size: 11pt; color: #64748b; letter-spacing: .3px; }
+  .rule { height: 1.2pt; background: #0f172a; margin: 6mm 0 5mm; width: 30mm; }
+  .cover .lead { font-size: 10pt; line-height: 1.9; color: #24303f; }
+  .cover .shot { margin-top: 7mm; }
+  .cover .shot img { width: 100%; border: .4pt solid #e2e8f0; border-radius: 1mm; display: block; }
+  .cover .meta { position: absolute; left: 20mm; right: 20mm; bottom: 16mm; font-family: "PingFang SC", sans-serif;
+                 font-size: 7.6pt; color: #94a3b8; display: flex; justify-content: space-between; border-top: .4pt solid #e6edf6; padding-top: 2.4mm; }
+  .toc { margin-top: 8mm; font-family: "PingFang SC", sans-serif; font-size: 9pt; color: #334155; }
+  .toc div { display: flex; align-items: baseline; border-bottom: .3pt dotted #dbe3ee; padding: 1.7mm 0; }
+  .toc .n { width: 16mm; color: #1d4ed8; font-family: Menlo, monospace; font-size: 8.2pt; font-weight: 700; }
+  .toc .t { flex: 1; }
+  .toc .p { color: #94a3b8; font-family: Menlo, monospace; font-size: 8.2pt; }
+</style>
+</head>
+<body>
+
+<!-- ============ 封面 ============ -->
+<section class="page cover">
+  <div class="kicker">三维视觉 · 自动驾驶传感器链路</div>
+  <h1>从物理量<br>到感知</h1>
+  <div class="sub">一条传感器数据的完整路径 · 七段架构图读法</div>
+  <div class="rule"></div>
+  <div class="lead">
+    一颗传感器把物理量变成字节，内核把字节变成 fd，驱动把字节变成<em>带时间戳的消息</em>，TF 把各路放到同一个坐标系，派生把观测换成更多表示，感知把多源汇成统一表示。<br><br>
+    中间只有一次 syscall 边界。跨过去之后，<b>驱动只翻译、不理解；对齐靠 TF，不靠搬数据。</b>
+  </div>
+  <div class="shot"><img src="./2026-11-传感器到感知-图1-从物理量到感知.png" alt=""></div>
+
+  <div class="toc">
+    <div><span class="n">〇</span><span class="t">七段一览：谁的地盘、换它要动谁</span><span class="p">02</span></div>
+    <div><span class="n">01</span><span class="t">全景：七段与一条边界</span><span class="p">03</span></div>
+    <div><span class="n">02 · 03</span><span class="t">传感器与接口 / 内核：数据量决定线，内核只给字节</span><span class="p">04</span></div>
+    <div><span class="n">04 · 05</span><span class="t">驱动：解析、打戳、发布 / 对齐：TF 与预处理</span><span class="p">06</span></div>
+    <div><span class="n">06 · 07</span><span class="t">派生：五类与尺度 / 感知：统一表示</span><span class="p">08</span></div>
+    <div><span class="n">08 · 09</span><span class="t">四条纪律与自检 / 附：文件与重出</span><span class="p">10</span></div>
+  </div>
+  <div class="meta"><span>2026-11 · 笔记 / 架构讲解</span><span>1 张图 · 11 页</span></div>
+</section>
+
+<!-- ============ 〇 一览 ============ -->
+<section class="page">
+  <div class="ph"><span><b>传感器到感知</b> · 架构讲解</span><span>〇、七段一览</span></div>
+
+  <h2><span class="n">〇</span>七段一览（先看表，再看图）</h2>
+  <p>这张图把一条数据从物理量到感知拆成七段。横着看是“被谁加工”，竖着看是“同一段里不同传感器怎么落地”。</p>
+
+  <table>
+    <thead><tr><th style="width:11%">段</th><th style="width:18%">落在哪</th><th style="width:18%">谁的地盘</th><th>换它要动谁</th></tr></thead>
+    <tbody>
+      <tr><td class="c">① 传感器</td><td>传感器内部</td><td>硬件 / 固件</td><td>换传感器、重标定</td></tr>
+      <tr><td class="c">② 接口</td><td>线缆 / 收发器</td><td>硬件</td><td>换线束、换收发器</td></tr>
+      <tr><td class="c">③ 内核</td><td>内核态</td><td>内核 / 驱动模块</td><td>改驱动模块、升级内核</td></tr>
+      <tr><td class="c">④⑤ 驱动</td><td>用户态</td><td>你写的节点</td><td>换 SDK、改解析</td></tr>
+      <tr><td class="c">对齐</td><td>用户态</td><td>标定配置 + 预处理节点</td><td>改 TF / 改预处理</td></tr>
+      <tr><td class="c">派生</td><td>用户态</td><td>派生节点 / SDK</td><td>换模型、换几何方法</td></tr>
+      <tr><td class="c">感知</td><td>用户态</td><td>感知团队</td><td>换网络、换表示</td></tr>
+    </tbody>
+  </table>
+
+  <div class="quote">
+    <b>主线</b>：物理量 → 字节（①②）→ fd（③）→ 带戳消息（④⑤）→ 同一时刻、同一坐标系（对齐）→ 更多表示（派生）→ 统一表示（感知）。<br>
+    <b>一句话</b>：七段里真正需要你写代码的只有 ④⑤ 之后的部分；前三段决定了你拿到的到底是字节、帧，还是语义。
+  </div>
+
+  <h3>为什么画成一张图，而不是七张</h3>
+  <p>七段单独讲，每一段都容易懂；难的是<b>段与段之间的责任边界</b>——谁该解析、谁该打戳、谁该做坐标变换、谁该做融合。这些边界一旦模糊，就会同时出现两种病：把驱动当应用（不敢容器化、不敢重启），或者把应用塞进驱动（换个传感器就要改感知）。</p>
+  <p>横向排开之后，边界变成一条竖线，看得见、也争得清。</p>
+
+  <div class="note">
+    <b>读法建议</b>：先看第 3 页的全图建立整体，再按需读 ④⑤（第 6 页）与对齐（第 7 页）——这两段是最容易混淆的地方。派生与感知（第 8–9 页）看的是“可信度”与“表示选择”。<br>
+    如果只有十分钟：第 3 页大图 → 第 6 页打戳 → 第 9 页“统一表示只选一种”。
+  </div>
+
+  <div class="pf"><span>传感器到感知 · 架构讲解</span><span class="no">02</span></div>
+</section>
+
+<!-- ============ 一 全景 ============ -->
+<section class="page">
+  <div class="ph"><span><b>传感器到感知</b> · 架构讲解</span><span>一、全景</span></div>
+
+  <h2><span class="n">01</span>全景：七段与一条边界</h2>
+
+  <figure>
+    <img src="./2026-11-传感器到感知-图1-从物理量到感知.png" alt="从物理量到感知的七段架构">
+    <figcaption>图 1 · 五类传感器横穿七段；橙虚线是唯一的 syscall 边界，右端“感知模块”整列合并，表示多路汇入同一个模块。</figcaption>
+  </figure>
+
+  <h3>三种读法</h3>
+  <p><b>横着读</b>：一行就是一条链路，从“这颗传感器输出什么”一直走到“它怎么进入感知”。五行分别是激光雷达、相机、毫米波雷达、IMU+GNSS、底盘 CAN。</p>
+  <p><b>竖着读</b>：一列就是一类工作。③ 列全是内核子系统，④⑤ 列全是“解析 → 打戳 → 发布”，对齐列全是 TF 与预处理，派生列区分了几何、学习、规则、元数据。</p>
+  <p><b>看边界</b>：橙虚线只有一条，卡在 ③ 与 ④ 之间。左边是特权层，右边是普通进程；跨过去之后，再没有任何一层能直接碰寄存器。</p>
+
+  <div class="note orange">
+    <b>这张图主张三件事</b><br>
+    ① 物理线不会直接进用户态——中间永远有内核把电平收成字节；<br>
+    ② 坐标变换不靠“中转 topic 搬数据”，靠 TF 树把外参放成一份；<br>
+    ③ 感知是一个吃掉多路的模块，不是每路各自跑到 BEV 的终点。
+  </div>
+
+  <h3>一个容易看漏的细节</h3>
+  <p>底盘 CAN 那一行的“对齐”格写的是<b>“标定参数（不产生 TF）”</b>。轮速、转角、档位不参与坐标变换，它们只被别的模块引用（比如曲率、里程计）。画图时最容易被顺手填成一条 TF，那就是错的。</p>
+
+  <div class="pf"><span>传感器到感知 · 架构讲解</span><span class="no">03</span></div>
+</section>
+
+<!-- ============ 二 ①② ============ -->
+<section class="page">
+  <div class="ph"><span><b>传感器到感知</b> · 架构讲解</span><span>二、① 传感器 / ② 接口</span></div>
+
+  <h2><span class="n">02</span>① ② 段：数据量决定线</h2>
+  <p>接口不是“越新越好”，而是被数据量逼出来的。摄像头单路 <b>~180 MB/s</b>，点云 <b>~5–20 MB/s</b>，轮速只有几字节——它们不可能共用一根线。</p>
+
+  <table>
+    <thead><tr><th style="width:17%">传感器</th><th style="width:26%">数据率</th><th style="width:26%">图上接口</th><th>为什么是它</th></tr></thead>
+    <tbody>
+      <tr><td>激光雷达</td><td>10–30 万点/帧 · 10–20 Hz</td><td>1000BASE-T1</td><td>点云走 IP，1 Gbps 刚好装下</td></tr>
+      <tr><td>相机 ×6–12</td><td>1920×1080×3 ≈ 6 MB/帧 · 30 fps</td><td>GMSL2 / FPD-Link III</td><td>单路就超过 1 Gbps，只能上 SerDes 专线</td></tr>
+      <tr><td>毫米波雷达</td><td>目标列表 / 4D 点云 · 20 Hz</td><td>CAN FD / 100BASE-T1</td><td>按输出形态二选一</td></tr>
+      <tr><td>IMU + GNSS</td><td>100–1000 Hz · &lt; 10 KB/s</td><td>SPI / UART / 以太网</td><td>数据小，但要硬时间戳</td></tr>
+      <tr><td>轮速 · 转角 · 档位</td><td>几字节 · 50–100 Hz</td><td>CAN / LIN</td><td>最便宜、最稳</td></tr>
+    </tbody>
+  </table>
+
+  <h3>两处必须说清的地方</h3>
+  <p><b>GMSL2 不是以太网。</b>它是点对点私有 SerDes：同轴、可同时供电和反向控制，但不能组网、不能跑 IP。图上把它和以太网画在同一段，是因为它们同属“物理层专线”，不是同一种协议。真实的路径是：摄像头 → 同轴 → 域控解串 → 以太网骨干。</p>
+  <p><b>阶梯中间有断层。</b>常见的 10BASE-T1S（10 Mbps 多点）、100BASE-T1（100 Mbps）、CAN XL（约 20 Mbps）没有单独列出，但雷达那一行的 “100BASE-T1” 就落在断层里。读图时按“量级”理解，不要按位置量距离。</p>
+
+  <div class="note">
+    <b>判据</b>：超过 ~10 MB/s 的连续数据必然走以太网或 SerDes；几字节的状态量留在 CAN / LIN 上最便宜。介于两者之间的（雷达目标、超声波阵列），才是 10BASE-T1S / 100BASE-T1 的战场。
+  </div>
+
+  <div class="pf"><span>传感器到感知 · 架构讲解</span><span class="no">04</span></div>
+</section>
+
+<!-- ============ 三 ③ ============ -->
+<section class="page">
+  <div class="ph"><span><b>传感器到感知</b> · 架构讲解</span><span>三、③ 内核</span></div>
+
+  <h2><span class="n">03</span>③ 段：字节流的入口</h2>
+  <p>物理线进到域控之后，第一站永远是内核。不同的线对应不同的子系统，但出口是同一种东西：<b>一个 fd</b>。</p>
+
+  <table>
+    <thead><tr><th style="width:20%">线的种类</th><th style="width:24%">内核子系统</th><th>用户态拿到什么</th></tr></thead>
+    <tbody>
+      <tr><td>以太网（雷达 / 激光）</td><td>netdev → socket</td><td>UDP 包，需要自己重组</td></tr>
+      <tr><td>相机同轴（GMSL2）</td><td>V4L2 + DMA</td><td>帧缓冲（mmap / DMABUF），零拷贝</td></tr>
+      <tr><td>CAN / CAN FD</td><td>SocketCAN</td><td><code>can_frame</code>：8 字节 + ID</td></tr>
+      <tr><td>IMU（SPI）</td><td>spidev</td><td>原始寄存器字节</td></tr>
+      <tr><td>GNSS（UART）</td><td>tty</td><td>NMEA / 私有二进制流</td></tr>
+    </tbody>
+  </table>
+
+  <h3>内核只给字节，不给语义</h3>
+  <p>这一句是 ③ 段最重要的性质。<code>SocketCAN</code> 交给你的是一帧 8 字节和它的 ID，<b>“这是左前轮速 23.5 km/h”这个语义不在内核里</b>——它要靠 DBC 查表才能解出来。同理，V4L2 交给你的是像素，不是“这是一辆卡车”。</p>
+  <p>所以 CAN 链路上其实有<b>两次解析</b>：第一次在内核把电平拆成帧，第二次在用户态（或中间件）按 DBC 把帧拆成物理量。图上把第二次标成“这是第二次解析”，就是为了防止把两层混成一层。</p>
+
+  <h3>零拷贝发生在哪一段</h3>
+  <p>相机这一路最容易误解。ISP（去马赛克、曝光、白平衡）通常在内核或专用硬件里完成，用户态拿到的是已经成形的图像。6 MB × 30 fps 不可能靠 memcpy 搬，所以走的是 DMA + <code>mmap</code> / <code>DMABUF</code>；ROS 2 里再叠加 intra-process 与 loaned message，才能把“过一遍 topic”的成本压下去。</p>
+
+  <div class="note orange">
+    <b>易错</b>：以为“驱动解析图像”发生在用户态。相机的大部分“解析”在 ③ 就结束了，用户态只做格式转换、打戳、发布；反倒是激光雷达和毫米波雷达，私有协议的解包确实在用户态 SDK 里。
+  </div>
+
+  <div class="pf"><span>传感器到感知 · 架构讲解</span><span class="no">05</span></div>
+</section>
+
+<!-- ============ 四 ④⑤ ============ -->
+<section class="page">
+  <div class="ph"><span><b>传感器到感知</b> · 架构讲解</span><span>四、④⑤ 驱动</span></div>
+
+  <h2><span class="n">04</span>④⑤ 段：解析、打戳、发布</h2>
+  <p>跨过 syscall 边界，进入你真正要写代码的地方。这一段的全部工作可以压缩成三件事。</p>
+
+  <pre>fd = open("/dev/video0") | socket() | read(can_fd) | read(spi_fd)   ← ③ 的出口
+──────────────────────── syscall 边界 ────────────────────────
+parse(buf) → points | image | frame                                  ← ④ 解析
+stamp = driver_time(buf)                                             ← ④ 打戳
+publish(topic, msg, frame_id)                                        ← ⑤ 发布</pre>
+
+  <h3>为什么打戳必须在这里</h3>
+  <p>时间戳记的是<b>采样时刻</b>，不是“你收到它的时刻”。③ 交出来的数据里通常已经带了硬件或驱动时间（PTP、PPS、逐点时间），④ 的职责是把它<b>保留并换算到统一时钟</b>，而不是重新取一次 <code>now()</code>。</p>
+  <p>一旦挪到订阅端，就等于用“收到的时间”冒充“采样的时间”，后面所有插值、配对、运动补偿都是在错误的基准上做算术——误差不会报警，只会让结果慢慢偏。</p>
+
+  <h3>判据：拔掉 ROS 还能不能跑</h3>
+  <p>能单独跑、还能把数据吐出来 → 里面有一颗<b>驱动核</b>（如 Livox SDK、librealsense），ROS 节点只是外壳；不能 → 它是“驱动 + 适配”揉在一起，别把它当纯应用，也别把它当纯驱动。</p>
+  <p>工程上的拆法：<code>driver_core</code>（不依赖 ROS，可单测）+ <code>ros_node</code>（薄壳：参数、msg 转换、QoS、生命周期）。这样“算不算驱动”就不再是语义争论。</p>
+
+  <div class="note">
+    <b>④ 里哪些能挪走</b>：坐标变换可以挪（很多栈放到 TF 或转换节点），协议解析和打戳不能挪。融合、感知、跟踪不该进来——驱动只翻译，不理解。
+  </div>
+
+  <div class="pf"><span>传感器到感知 · 架构讲解</span><span class="no">06</span></div>
+</section>
+
+<!-- ============ 五 对齐 ============ -->
+<section class="page">
+  <div class="ph"><span><b>传感器到感知</b> · 架构讲解</span><span>五、对齐</span></div>
+
+  <h2><span class="n">05</span>对齐：TF 树在前，预处理在后</h2>
+  <p>对齐解决两件事：<b>空间</b>——把各路放到同一个坐标系；<b>时间</b>——把不同频率的采样凑到同一时刻。这一列里 TF 管空间，预处理管数据本身。</p>
+
+  <table>
+    <thead><tr><th style="width:16%"></th><th style="width:38%">static（外参）</th><th>dynamic（位姿）</th></tr></thead>
+    <tbody>
+      <tr><td>描述什么</td><td>传感器装在车上的哪个位置、朝哪</td><td>车此刻在 odom / map 里的位姿</td></tr>
+      <tr><td>变不变</td><td>标定一次，永久有效</td><td>每帧都变</td></tr>
+      <tr><td>发几次</td><td>只发一次（<code>static_transform_publisher</code>）</td><td>按频率持续发</td></tr>
+      <tr><td>谁产生</td><td>标定文件</td><td>定位 / 里程计</td></tr>
+      <tr><td>消费者怎么用</td><td colspan="2"><code>tf2_ros::Buffer::transformPointCloud(msg, "base_link")</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>为什么不用“中转 topic 统一到车体系”</h3>
+  <p>因为外参只有一份，<b>放成一条 TF 就够了</b>：谁需要谁去查，不产生任何数据搬运。中转 topic 的代价是实打实的——多一次序列化、多一跳延迟、多一份带宽；对 6 MB 的图像尤其不划算。</p>
+  <p>更重要的是：<b>图像根本不存在“ego 系的图像”</b>。像素不能旋转平移。相机侧真正发生的是把 BEV 上的 3D 点投影到图像上采样（view transform），不是把图像本身变到车体系。所以“先变到 ego 再分发”这条路，对点云成立，对图像不成立。</p>
+
+  <table>
+    <thead><tr><th style="width:22%">手段</th><th style="width:38%">适合什么</th><th>代价</th></tr></thead>
+    <tbody>
+      <tr><td>TF 树 + 各取所需</td><td>外参、位姿；点云 / 目标的换系</td><td>几乎为零，推荐默认</td></tr>
+      <tr><td>预处理 topic</td><td>去畸变、deskew、时间同步打包、降采样</td><td>多一跳，但只做一次</td></tr>
+      <tr><td>共享内存 / 零拷贝</td><td>多下游要同一份大结果（BEV 特征）</td><td>实现复杂，跨机不可用</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note orange">
+    <b>易错</b>：上中转节点后重新打时间戳。变换不改变采样时刻，时间戳必须<b>原样透传</b>——否则等于在 ④ 之后又造了一个假的“采样时刻”。
+  </div>
+
+  <div class="pf"><span>传感器到感知 · 架构讲解</span><span class="no">07</span></div>
+</section>
+
+<!-- ============ 六 派生 ============ -->
+<section class="page">
+  <div class="ph"><span><b>传感器到感知</b> · 架构讲解</span><span>六、派生</span></div>
+
+  <h2><span class="n">06</span>派生：多出来的数据，分五类</h2>
+  <p>“订阅原始 topic、产出更多数据”这个形态成立，但要先分清产出的到底是什么。按<b>信息从哪来</b>分，是五类，不是两类。</p>
+
+  <table>
+    <thead><tr><th style="width:14%">类型</th><th style="width:36%">例子</th><th style="width:26%">信息从哪来</th><th>可信度</th></tr></thead>
+    <tbody>
+      <tr><td>几何</td><td>双目视差、三角化、IPM、range image</td><td>已有观测的重新组织</td><td>高（可推导）</td></tr>
+      <tr><td>学习</td><td>单目深度、光流、分割、occupancy</td><td>训练集注入的先验</td><td>中（有偏）</td></tr>
+      <tr><td>规则 / 物理</td><td>轮速+IMU→里程计、GNSS+IMU→组合</td><td>运动学、物理约束</td><td>中（随时间累积误差）</td></tr>
+      <tr><td>多源融合</td><td>前 / 后 / 特征级融合、伪点云</td><td>多源独立观测</td><td>唯一真正增信息的</td></tr>
+      <tr><td>元数据</td><td>置信度、质量分、有效 mask、尺度因子</td><td>对数据本身的评估</td><td>跟随主数据</td></tr>
+    </tbody>
+  </table>
+
+  <h3>派生不“增加”信息</h3>
+  <p>三种情况要分开看：<b>换表示</b>（几何，理想可逆）、<b>注入先验</b>（学习，引入偏差，且偏差与 LiDAR 误差不独立）、<b>融合独立源</b>（唯一真正增加信息）。所以单目深度不是“多了一颗传感器”，而是“多了一个先验”——下游若把它当独立观测，两个误差会按同一个方向灌进状态估计。</p>
+
+  <h3>单目深度没有绝对尺度</h3>
+  <p>单目深度模型（MiDaS 一类）输出多是<b>相对深度 / 逆深度</b>，尺度未知，直接当米用就是全错。要变绝对尺度，只能靠已知基线（双目）、已知物体尺寸、地面假设，或与 LiDAR / 轮速对齐求 scale。</p>
+  <p>双目则受限于 <code>Z = f·B/d</code>，误差 <code>σZ = Z²/(fB)·σd</code>，<b>随距离平方增长</b>：f=1000 px、B=0.5 m、Z=50 m 时视差只有 10 px，0.5 px 的视差误差就带来 ~2.5 m 的距离误差；弱纹理、重复纹理、强光还会直接失效。</p>
+
+  <div class="note orange">
+    <b>易错</b>：把这类工作叫“数据增广”。增广改的是样本分布、只在训练侧做；派生改的是表示、在运行期做。两者唯一的交集是用 3DGS / NeRF 合成新视角来扩充训练集。
+  </div>
+
+  <div class="pf"><span>传感器到感知 · 架构讲解</span><span class="no">08</span></div>
+</section>
+
+<!-- ============ 七 感知 ============ -->
+<section class="page">
+  <div class="ph"><span><b>传感器到感知</b> · 架构讲解</span><span>七、感知模块</span></div>
+
+  <h2><span class="n">07</span>感知模块：吃多源、做融合、吐统一表示</h2>
+  <p>图的最后一列是<b>一整块</b>，不是逐行五个格子。这是刻意的：如果每行各放一个感知格子，图会暗示“每一路各自跑一遍感知”；合并成一整块，才表达出“多路汇入同一个模块”。</p>
+
+  <h3>三步</h3>
+  <p><b>时间同步</b>：不同频率的采样先对齐到同一时刻（硬触发 / PTP / 插值）。<b>空间对齐</b>：用 TF 把各路放到同一坐标系。<b>融合</b>：前融合（原始数据层）、后融合（目标层）、特征级融合（网络中间层）。</p>
+  <p>顺序不能乱：先同步再对齐再融合，否则你是在精确地对齐一个错误的时刻，或者把两个不同坐标系的东西叠在一起。</p>
+
+  <h3>输出是“统一特征表示”，BEV 只是其中一种</h3>
+  <p>可选的统一表示至少有四种：<b>BEV</b>（俯视栅格）、<b>体素</b>（3D 网格）、<b>柱体</b>（Pillar）、<b>query</b>（一组可学习的 3D 参考点，DETR 式）。选哪种是精度、算力、部署形态的取舍，不是先进与落后的区别。</p>
+  <p>但有一点必须咬死：<b>选定之后，网格定义全局唯一</b>——是 ego-centric（随车动）还是 world-centric（全局固定），分辨率、覆盖范围、朝向，只能用同一份配置。两个模块各定义一套，即使外参完全一致，两张图也叠不上。</p>
+
+  <div class="note">
+    <b>为什么“重复变换”不是最贵的</b>：点云乘一个 4×4 矩阵是微秒到毫秒级，很便宜；真正贵的是把 6 MB 图像搬过一个 topic（单路 180 MB/s）。所以“消除重复”的重点在<b>重复带宽</b>，不在重复算力。
+  </div>
+
+  <div class="pf"><span>传感器到感知 · 架构讲解</span><span class="no">09</span></div>
+</section>
+
+<!-- ============ 八 纪律 ============ -->
+<section class="page">
+  <div class="ph"><span><b>传感器到感知</b> · 架构讲解</span><span>八、纪律与自检</span></div>
+
+  <h2><span class="n">08</span>四条纪律</h2>
+
+  <ul class="pts">
+    <li><b>打戳纪律</b>：时间戳在 ④ 打；派生量继承输入采样时刻，“推断完成时刻”只是 latency 字段。</li>
+    <li><b>图像不是刚体</b>：相机侧发生的是投影 / 采样（view transform），不存在“把 6 MB 图像乘一个 4×4”。</li>
+    <li><b>统一表示只选一种</b>：BEV / 体素 / 柱体 / query 都是选择；选定后全局唯一定义。</li>
+    <li><b>派生 ≠ 增广</b>：换表示 → 注入先验 → 融合独立源，可信度依次降低、代价依次升高。</li>
+  </ul>
+
+  <h3>三个常见误解</h3>
+  <p><b>误解一：“有一个中间节点统一监听所有传感器”。</b>没有。每颗传感器一个驱动节点，中间是 topic 不是节点；真正存在的“中间层”只有管理框架（启停、健康检查）和转发工具（relay、rosbag、bridge），它们都不解析。</p>
+  <p><b>误解二：“坐标变换应该做成中转 topic”。</b>外参只有一份，放成静态 TF 就够；中转 topic 是把“一次矩阵乘法”换成了“一次序列化 + 一跳延迟”。只有多下游共享同一份重计算结果（deskew、BEV 特征）时，才值得。</p>
+  <p><b>误解三：“先把每一路都变成 BEV，再融合”。</b>大多数 BEV 方法是“图像 lift 到视锥 → 投到 BEV 网格 → 聚合”，融合发生在表示构建的过程中，不是各自建好再拼。</p>
+
+  <h3>上线前自检（六条）</h3>
+  <ul class="pts">
+    <li>每条消息都有 <code>frame_id</code>，且能在 TF 树里查到；</li>
+    <li><code>stamp</code> 在 ④ 打，不晚于 <code>read()</code> 之后；</li>
+    <li>驱动里没有融合 / 感知代码；</li>
+    <li>派生节点的输出带 <code>model_version</code> 与 <code>latency</code>，且标注是“推断”还是“测量”；</li>
+    <li>BEV / 体素网格参数只有一份来源，两个消费端读到的是同一份；</li>
+    <li>同一段数据能用 rosbag 复现。</li>
+  </ul>
+
+  <div class="pf"><span>传感器到感知 · 架构讲解</span><span class="no">10</span></div>
+</section>
+
+<!-- ============ 附 ============ -->
+<section class="page">
+  <div class="ph"><span><b>传感器到感知</b> · 架构讲解</span><span>附：文件与重出</span></div>
+
+  <h2><span class="n">09</span>附：文件与重出</h2>
+
+  <table>
+    <thead><tr><th style="width:52%">文件</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td><code>assets/2026-11-传感器到感知-图1-从物理量到感知.png</code></td><td>图 1，七段架构，3306×1458</td></tr>
+      <tr><td><code>assets/_make_sensor2perception_fig.html</code></td><td>图 1 的源文件（自包含 HTML）</td></tr>
+      <tr><td><code>assets/_make_sensor2perception_note.html</code></td><td>本册 PDF 的排版源</td></tr>
+      <tr><td><code>assets/_make_sensor2perception_qa.html</code></td><td>《疑问记录》PDF 的排版源</td></tr>
+      <tr><td><code>assets/_render_sensor2perception.sh</code></td><td>一键重出：图 + 两份 PDF</td></tr>
+      <tr><td><code>2026-11-传感器到感知-疑问记录.md / .pdf</code></td><td>配套的问题记录册，按 Qn 顺延</td></tr>
+    </tbody>
+  </table>
+
+  <h3>重出图</h3>
+  <pre>cd 笔记/三维视觉/assets
+./_render_sensor2perception.sh fig</pre>
+
+  <h3>重出 PDF</h3>
+  <pre>cd 笔记/三维视觉/assets
+./_render_sensor2perception.sh pdf</pre>
+
+  <div class="note">
+    <b>口径说明</b>：图里的频率、带宽、接口名取通用量级（1000BASE-T1 为 1 Gbps、GMSL2 为 6 Gbps、CAN FD 为 8 Mbps），不是某一家的实现；TF、V4L2、SocketCAN 按 ROS 2 / Linux 通用栈描述，Adaptive AUTOSAR 或自研中间件里名称不同但分层一致。
+  </div>
+
+  <div class="pf"><span>传感器到感知 · 架构讲解</span><span class="no">11</span></div>
+</section>
+
+</body>
+</html>

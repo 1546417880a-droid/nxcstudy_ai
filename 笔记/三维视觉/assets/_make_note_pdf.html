@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>CAN 总线 → ROS 通信 · 读图答疑</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { background: #eef1f6; }
+  body {
+    font-family: "Songti SC", "Songti TC", "STSong", serif;
+    color: #1b2432; font-size: 10.4pt; line-height: 1.78;
+  }
+  .page {
+    width: 210mm; height: 297mm; background: #fff; position: relative;
+    padding: 15mm 17mm 16mm; page-break-after: always; overflow: hidden; margin: 0 auto;
+  }
+  .page:last-child { page-break-after: auto; }
+  @media screen { .page { box-shadow: 0 1px 6px rgba(15,23,42,.12); margin-bottom: 8mm; } }
+
+  /* ---------- running head / foot ---------- */
+  .ph {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: "PingFang SC", sans-serif; font-size: 7.4pt; letter-spacing: .4px;
+    color: #94a3b8; border-bottom: .4pt solid #e5eaf2; padding-bottom: 2.2mm;
+  }
+  .ph b { color: #475569; font-weight: 600; }
+  .pf {
+    position: absolute; left: 17mm; right: 17mm; bottom: 8mm;
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: "PingFang SC", sans-serif; font-size: 7.2pt; color: #a3aec0;
+    border-top: .4pt solid #eef2f7; padding-top: 2mm;
+  }
+  .pf .no { font-family: Menlo, monospace; color: #64748b; letter-spacing: .5px; }
+
+  /* ---------- typography ---------- */
+  h2 {
+    font-family: "PingFang SC", sans-serif; font-size: 15pt; font-weight: 600;
+    letter-spacing: .3px; color: #0f172a; margin: 5mm 0 1.5mm;
+  }
+  h2 .n {
+    display: inline-block; font-family: Menlo, monospace; font-size: 8.6pt; font-weight: 700;
+    color: #1d4ed8; background: #eef4ff; border: .4pt solid #c7dafc; border-radius: 1mm;
+    padding: .6mm 1.5mm; margin-right: 2.6mm; vertical-align: 2pt; letter-spacing: .5px;
+  }
+  h3 {
+    font-family: "PingFang SC", sans-serif; font-size: 10.6pt; font-weight: 600;
+    color: #1e3a5f; margin: 4mm 0 1mm;
+  }
+  p { margin: 1.6mm 0; text-align: justify; }
+  .lead { color: #334155; }
+  b, strong { font-weight: 600; color: #0f172a; }
+  .accent { color: #2563eb; font-weight: 600; }
+  em { font-style: normal; background: linear-gradient(transparent 62%, #dbeafe 62%); padding: 0 .4mm; }
+
+  /* ---------- Q tag ---------- */
+  .q { display: flex; gap: 3mm; align-items: flex-start; }
+  .qtag {
+    flex: 0 0 11mm; font-family: "PingFang SC", sans-serif; font-size: 7.6pt; font-weight: 700;
+    color: #2563eb; background: #eef4ff; border: .4pt solid #c7dafc; border-radius: 1.2mm;
+    text-align: center; padding: 1.2mm 0; letter-spacing: .3px; margin-top: .6mm;
+  }
+  .qbody { flex: 1; }
+
+  /* ---------- table ---------- */
+  table { width: 100%; border-collapse: collapse; font-family: "PingFang SC", sans-serif;
+          font-size: 8.6pt; line-height: 1.6; margin: 2.4mm 0; }
+  th, td { border: .4pt solid #dbe3ee; padding: 1.7mm 2.2mm; vertical-align: top; text-align: left; }
+  thead th { background: #f5f8fc; color: #334155; font-weight: 600; }
+  tbody tr:nth-child(even) td { background: #fbfcfe; }
+  td.c, th.c { text-align: center; }
+  .tcap { font-family: "PingFang SC", sans-serif; font-size: 7.6pt; color: #94a3b8; margin-top: -1mm; }
+
+  /* ---------- code / mono ---------- */
+  pre {
+    font-family: "SF Mono", Menlo, monospace; font-size: 7.8pt; line-height: 1.62;
+    background: #f7f9fc; border: .4pt solid #e3eaf3; border-left: 2.4pt solid #2563eb;
+    border-radius: 1mm; padding: 2.6mm 3.4mm; margin: 2.4mm 0; white-space: pre; color: #1e293b;
+    overflow: hidden;
+  }
+  code { font-family: "SF Mono", Menlo, monospace; font-size: 8.6pt; background: #f1f5f9;
+         padding: .2mm .8mm; border-radius: .8mm; }
+
+  /* ---------- callouts ---------- */
+  .note {
+    background: #f6f9fd; border: .4pt solid #dbe7f6; border-left: 2.6pt solid #0d9488;
+    border-radius: 1mm; padding: 2.6mm 3.4mm; margin: 2.6mm 0;
+    font-family: "PingFang SC", sans-serif; font-size: 8.8pt; line-height: 1.7;
+  }
+  .note .t { font-weight: 700; color: #0f766e; font-size: 8.4pt; letter-spacing: .5px; }
+  .quote {
+    font-family: "PingFang SC", sans-serif; font-size: 9pt; color: #334155;
+    background: #f8fafc; border: .4pt solid #e6edf6; border-radius: 1.2mm; padding: 3mm 4mm; margin: 2.6mm 0;
+  }
+  .quote b { color: #1d4ed8; }
+
+  /* ---------- cover ---------- */
+  .cover { padding: 20mm 20mm 16mm; }
+  .kicker { font-family: "PingFang SC", sans-serif; font-size: 8pt; letter-spacing: 2px; color: #2563eb; font-weight: 600; }
+  .cover h1 {
+    font-family: "PingFang SC", sans-serif; font-size: 29pt; font-weight: 700; line-height: 1.32;
+    letter-spacing: .4px; margin: 4mm 0 3mm; color: #0b1220;
+  }
+  .cover .sub { font-family: "PingFang SC", sans-serif; font-size: 11.5pt; color: #64748b; letter-spacing: .4px; }
+  .rule { height: 1.2pt; background: #0f172a; margin: 7mm 0 6mm; width: 32mm; }
+  .onesent { font-size: 10.2pt; line-height: 1.9; color: #24303f; }
+  .cover .meta {
+    position: absolute; left: 20mm; right: 20mm; bottom: 16mm; display: flex; justify-content: space-between;
+    font-family: "PingFang SC", sans-serif; font-size: 7.6pt; color: #94a3b8;
+    border-top: .4pt solid #e5eaf2; padding-top: 3mm;
+  }
+  .cover .figs { font-family: "PingFang SC", sans-serif; font-size: 8pt; color: #64748b; }
+
+  /* ---------- figure page ---------- */
+  figure { margin: 2mm 0 3mm; }
+  figure img { width: 100%; display: block; border: .4pt solid #e2e8f0; border-radius: 1.2mm; }
+  figcaption { font-family: "PingFang SC", sans-serif; font-size: 7.8pt; color: #94a3b8; margin-top: 1.6mm; }
+  .bad, .good { font-family: "PingFang SC", sans-serif; font-size: 8.8pt; line-height: 1.66; padding: 2.4mm 3mm; border-radius: 1mm; }
+  .bad { background: #fef2f2; border: .4pt solid #fbd5d5; color: #7f1d1d; }
+  .good { background: #f0fdf4; border: .4pt solid #cdebd6; color: #14532d; }
+  .bad .m, .good .m { font-weight: 700; margin-right: 1.4mm; }
+
+  .toc { font-family: "PingFang SC", sans-serif; font-size: 8.6pt; }
+
+  .dirs {
+    margin-top: 7mm; padding-top: 3mm; border-top: .4pt solid #e5eaf2;
+    display: grid; grid-template-columns: 1fr 1fr; column-gap: 12mm;
+    font-family: "PingFang SC", sans-serif; font-size: 8.2pt; color: #475569;
+  }
+  .dirs div { display: flex; align-items: baseline; gap: 2mm; padding: 1.1mm 0; }
+  .dirs span { font-family: Menlo, monospace; font-size: 7.4pt; color: #94a3b8; }
+  .dirs b { margin-left: auto; font-family: Menlo, monospace; font-size: 7.6pt;
+            color: #64748b; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<!-- ============================ P1 封面 ============================ -->
+<section class="page cover">
+  <div class="kicker">三维视觉 · 笔记 / 2026.11 · 答疑 Q1–Q7</div>
+  <h1>CAN 总线 → ROS 通信<br>读图答疑</h1>
+  <div class="sub">差分信号 · 帧 ID · 多传感器时间同步</div>
+  <div class="rule"></div>
+
+  <div class="onesent">
+    这两张架构图画完之后，被连续追问了七个问题：CAN_H / CAN_L 到底是什么、差分凭什么抗干扰、并联在一根线上怎么分清是谁的数据、0 和 1 怎么装下“60 km/h”、总线会不会把几个传感器的数据拼成一包、以及传感器不同步时 ROS 怎么对齐。
+  </div>
+  <div class="onesent" style="margin-top:3mm; color:#475569;">
+    这份笔记按提问顺序逐条归档答案，并标明每个结论落在图上的哪个位置 —— 它不是一篇 CAN 教程，而是<em>这两张图的注释与答辩</em>。
+  </div>
+
+  <h2 style="margin-top:10mm;"><span class="n">00</span>七个疑问与落点</h2>
+  <table class="toc">
+    <thead><tr><th class="c" style="width:8%">#</th><th style="width:41%">疑问</th><th>一句话答案</th><th class="c" style="width:9%">图</th></tr></thead>
+    <tbody>
+      <tr><td class="c">Q1</td><td>CAN_H 和 CAN_L 是什么东西</td><td>一对双绞线，差分传输的物理载体</td><td class="c">图 1</td></tr>
+      <tr><td class="c">Q2</td><td>差分信号又是什么</td><td>不看单线对地电压，只看两根线的差值</td><td class="c">图 1</td></tr>
+      <tr><td class="c">Q3</td><td>都并联在一条线上，怎么知道这帧是谁的</td><td>靠帧头 ID 做内容寻址，硬件过滤器按需取</td><td class="c">图 1</td></tr>
+      <tr><td class="c">Q4</td><td>0 和 1 怎么表达“车速 60 km/h”</td><td>二进制 → 字节 → 按 DBC 切位、乘系数、加偏移</td><td class="c">图 1</td></tr>
+      <tr><td class="c">Q5</td><td>总线会不会把几个传感器拼成一包</td><td>不会，分时复用，一帧只装一件事</td><td class="c">图 1</td></tr>
+      <tr><td class="c">Q6</td><td>传感器不同步，ROS 消息怎么对齐</td><td>时间戳 + 软件近似同步 + 硬件对表 + 算法预测</td><td class="c">文字</td></tr>
+      <tr><td class="c">Q7</td><td>Topic / Service / Action 三种通信怎么选</td><td>一直流用 Topic、问一次用 Service、长任务用 Action</td><td class="c">图 2</td></tr>
+    </tbody>
+  </table>
+
+  <div class="figs" style="margin-top:3.2mm;">
+    配图：<b>图 1</b>（Q1–Q5）CAN 链路：从底盘到规划节点　·　<b>图 2</b>（Q7）三种通信机制　·　Q6 只有文字
+  </div>
+
+  <div class="dirs">
+    <div><span>01</span>CAN_H / CAN_L 是什么<b>2</b></div>
+    <div><span>02</span>差分信号：只看差值<b>2</b></div>
+    <div><span>03</span>并联在一根线上怎么分帧<b>3</b></div>
+    <div><span>04</span>0 和 1 怎么装下 60 km/h<b>4</b></div>
+    <div><span>05</span>总线不会把传感器拼成一包<b>5</b></div>
+    <div><span>06</span>不同步时 ROS 怎么对齐<b>5</b></div>
+    <div><span>07</span>图 1：CAN 链路（Q1–Q5）<b>7</b></div>
+    <div><span>08</span>图 2：三种通信（Q7）<b>8</b></div>
+    <div><span>09</span>画图前的自查清单<b>9</b></div>
+    <div><span>10</span>附录：图片与源文件<b>9</b></div>
+  </div>
+
+  <div class="meta">
+    <span>nxcstudy_ai · 暂时未归纳 / 三维视觉</span>
+    <span>共 9 页 · 配图 2 张</span>
+  </div>
+</section>
+
+<!-- ============================ P2 一、二 ============================ -->
+<section class="page">
+  <div class="ph"><span>CAN 总线 → ROS 通信 · 读图答疑</span><span><b>01 · 02</b>　物理层</span></div>
+
+  <h2><span class="n">01</span>CAN_H / CAN_L 是什么</h2>
+  <div class="q">
+    <div class="qtag">Q1</div>
+    <div class="qbody">
+      <p><b>它们是线，不是信号名。</b>CAN 线束里最核心的就是两根线：CAN_H（High）与 CAN_L（Low），工业上做成一对<b>双绞线</b>（互相缠绕）。</p>
+      <p>为什么要绞：底盘里有电机、DC-DC、火花塞，电磁干扰很强。双绞让两根线在空间上几乎处在同一个干扰场里，干扰会<b>同时、等量</b>地叠加到两根线上（共模），后面一减就抵消了。</p>
+    </div>
+  </div>
+
+  <p style="margin-top:2mm;">拓扑是<b>总线型并联</b>，既不是星形，也不是“菊花链式串联”：</p>
+<pre>节点 A                节点 B                节点 C
+┌──────┐             ┌──────┐             ┌──────┐
+│CAN_H ├─────────────┤CAN_H ├─────────────┤CAN_H │
+│      │             │      │             │      │
+│CAN_L ├─────────────┤CAN_L ├─────────────┤CAN_L │
+└──────┘             └──────┘             └──────┘
+       └── 总线两端各接一个 120 Ω 终端电阻，吸收信号反射 ──┘</pre>
+
+  <div class="note">
+    <span class="t">最容易记错</span><br>
+    120 Ω 只在总线<b>最远的两端</b>各一个，中间节点不接；不是每个设备都接，也不是每个设备都不接。
+  </div>
+
+  <h2><span class="n">02</span>差分信号：只看差值，不看绝对值</h2>
+  <div class="q">
+    <div class="qtag">Q2</div>
+    <div class="qbody">
+      <p>差分是一种“看差值”的传输方式，而不是“看某根线对地是多少伏”。CAN 收发器把总线状态编码成两个电平：</p>
+    </div>
+  </div>
+
+  <table>
+    <thead><tr><th style="width:26%">状态</th><th class="c" style="width:14%">逻辑值</th><th class="c">CAN_H</th><th class="c">CAN_L</th><th class="c">差值 H−L</th><th class="c">俗称</th></tr></thead>
+    <tbody>
+      <tr><td>显性 Dominant</td><td class="c">0</td><td class="c">≈ 3.5 V</td><td class="c">≈ 1.5 V</td><td class="c">≈ 2 V</td><td class="c">强、大嗓门</td></tr>
+      <tr><td>隐性 Recessive</td><td class="c">1</td><td class="c">≈ 2.5 V</td><td class="c">≈ 2.5 V</td><td class="c">≈ 0 V</td><td class="c">弱、小声</td></tr>
+    </tbody>
+  </table>
+  <div class="tcap">表 1　CAN 的两种总线状态（ISO 11898 高速 CAN 典型值）</div>
+
+  <p>接收端只做一件事：<code>V_diff = CAN_H − CAN_L</code>，≈2 V 读 0，≈0 V 读 1。抗干扰的全部秘密在这段算术里：</p>
+
+<pre>电机启动，把整条线束的电位整体抬高 2 V（共模干扰）
+  单端信号：0 V → 2 V，接收端可能误判
+  差分信号：H 3.5→5.5 V，L 1.5→3.5 V
+            差值 5.5 − 3.5 = 2 V   ← 一点没变，逻辑 0 依旧是 0</pre>
+
+  <div class="quote">
+    “差分”三个字拆开就是：<b>两根线一起变（共模）不影响结果，只有两根线相对变化才携带信息</b>。绞距、屏蔽层、终端电阻，都是围绕“让两根线经历完全相同的干扰”这一个目标服务的。
+  </div>
+
+  <div class="pf"><span>2026.11 · 三维视觉笔记</span><span class="no">02 / 09</span></div>
+</section>
+
+<!-- ============================ P3 三 ============================ -->
+<section class="page">
+  <div class="ph"><span>CAN 总线 → ROS 通信 · 读图答疑</span><span><b>03</b>　寻址</span></div>
+
+  <h2><span class="n">03</span>并联在一根线上，怎么知道这帧是谁的</h2>
+  <div class="q">
+    <div class="qtag">Q3</div>
+    <div class="qbody">
+      <p>关键在于：CAN 上跑的不是连续模拟量，而是<b>打包好的帧</b>，每帧开头都有 <b>ID</b>。提问里“怎么接收所有传感器的信号”这个说法本身要修正 —— 接收端并不接收“所有”，它只接收自己配置关心的那些 ID。</p>
+    </div>
+  </div>
+
+  <h3>1　ID 是“内容标识”，不是“目的地地址”</h3>
+  <p><code>ID 0x100 = 车速</code>、<code>ID 0x200 = 方向盘转角</code>。发送方不指定收件人，这是<b>广播</b>语义，和以太网“发给某个 MAC / IP”完全不同。ID 回答的是“这是什么数据”，不是“这份数据给谁”。</p>
+
+  <h3>2　接收端靠硬件过滤器筛选</h3>
+<pre>总线上混杂流过：0x100 车速 | 0x300 车门 | 0x200 转角 | 0x100 车速 ...
+                    │           │          │
+域控制器 CAN 控制器：只放行 0x100、0x200（其余在硬件层丢弃，不占 CPU）
+                    ↓
+ROS 驱动节点：解析 0x100 → 发布 /vehicle/speed</pre>
+
+  <h3>3　各发各的，靠时间片轮流</h3>
+<pre>时刻 1：轮速 ECU  → ID 0x100，车速 60
+时刻 2：转角 ECU  → ID 0x200，转角 30°
+时刻 3：轮速 ECU  → ID 0x100，车速 61（周期 10 ms 又到了）</pre>
+  <p>线上永远是“一帧一帧前后排开”，不存在几家的数据混在同一帧里 —— 这正是 Q5 的答案，也是画架构图时最容易出错的地方。</p>
+
+  <h3>4　顺便理解仲裁：为什么不会撞车</h3>
+  <p>两个节点同时开口时，逐位比较 ID：谁发<b>显性 0</b>、对方发<b>隐性 1</b>，总线呈现显性，发隐性的那个立刻退出、下次再来，发显性的毫无感知地发完。这叫<b>非破坏性仲裁</b>，所以 <b>ID 数值越小优先级越高</b> —— 刹车、碰撞这类安全帧的 ID 一定排在最前面，永远不会被娱乐系统的信号卡住。</p>
+
+  <div class="note">
+    <span class="t">一句话</span><br>
+    总线上没有“红绿灯”，也没有总线仲裁器；优先级是由电平的物理强弱（显性覆盖隐性）在逐位比较中自然决出的。
+  </div>
+
+  <h3>5　顺带纠正两个常见误解</h3>
+  <p><b>误解一：CAN 是主从轮询。</b>实际是<b>多主</b>（multi-master）：任何节点只要总线空闲就能发起，不需要主机点名，冲突由仲裁自然化解。</p>
+  <p><b>误解二：ID 越小越不重要。</b>正好相反 —— ID 越小优先级越高，所以安全相关帧（刹车、碰撞）会被分配最小的 ID，以免被娱乐系统的流量挡住。</p>
+
+  <div class="pf"><span>2026.11 · 三维视觉笔记</span><span class="no">03 / 09</span></div>
+</section>
+
+<!-- ============================ P4 四 ============================ -->
+<section class="page">
+  <div class="ph"><span>CAN 总线 → ROS 通信 · 读图答疑</span><span><b>04</b>　编码</span></div>
+
+  <h2><span class="n">04</span>0 和 1 怎么变成“车速 60 km/h”</h2>
+  <div class="q">
+    <div class="qtag">Q4</div>
+    <div class="qbody">
+      <p>分四步，缺一不可：物理量 → 整数 → 二进制 → 按 DBC 切位 → 加上帧头。</p>
+    </div>
+  </div>
+
+  <table>
+    <thead><tr><th class="c" style="width:12%">步骤</th><th style="width:30%">做什么</th><th>例子</th></tr></thead>
+    <tbody>
+      <tr><td class="c">①</td><td>物理量 → 整数</td><td>60 km/h 按系数 1 km/h / bit 变成整数 60</td></tr>
+      <tr><td class="c">②</td><td>整数 → 二进制</td><td>60 = <code>0011 1100</code>，正好一个字节</td></tr>
+      <tr><td class="c">③</td><td>字节 → 信号</td><td>占哪几位由 DBC 规定：起始位、长度、字节序、系数、偏移</td></tr>
+      <tr><td class="c">④</td><td>信号 → 帧</td><td>拼上 ID、DLC、CRC，形成可在线上传输的帧</td></tr>
+    </tbody>
+  </table>
+
+  <h3>一帧的骨架</h3>
+<pre>[SOF 1b] [仲裁段 ID 11b + RTR] [控制段 DLC 4b] [数据段 0~8 B] [CRC 15b] [ACK] [EOF 7b]
+              ↑ 这是什么数据        ↑ 有几个字节      ↑ 真正的数值</pre>
+
+  <h3>DBC：收发双方共用的“解码本”</h3>
+<pre>BO_ 256 VehicleStatus: 8 ECU_Wheel
+ SG_ VehicleSpeed : 0|16@1+ (0.01,0) [0|300] "km/h"  DomainController
+       ↑起始位 ↑长度 ↑字节序 ↑系数 ↑偏移 ↑范围 ↑单位</pre>
+  <p>所以发送端并不是“把电信号变成 60”，而是把 60 变成一串 0/1，按约定塞进固定的位置；接收端拿同一份 DBC 反向拆开，才还原出 60。没有 DBC，那 8 个字节对人类和程序都只是一团二进制。</p>
+
+  <h3>字节序：同一个值，两边可能解出不同结果</h3>
+<pre>60 → 0x003C（16 位信号）
+  Intel（小端，DBC 写 @1）：byte0 = 0x3C, byte1 = 0x00
+  Motorola（大端，DBC 写 @0）：byte0 = 0x00, byte1 = 0x3C
+  字节序填错 → 同一份二进制被读成 15360 或 0</pre>
+  <p>图 1 里那句“ID 0x123 的 byte0–1 → 车速 32.5 km/h”，用的就是这种“跨两个字节拼一个物理量”的写法；一旦字节序与发送端不一致，数值就会翻成大数或归零，这是联调时最常见的低级故障。</p>
+
+  <h3>三条边界，决定了 CAN 能干什么、不能干什么</h3>
+  <table>
+    <thead><tr><th style="width:26%">边界</th><th>含义</th></tr></thead>
+    <tbody>
+      <tr><td>经典 CAN 8 字节</td><td>一帧最多 8 B；CAN FD 扩到 64 B，且数据段可提速</td></tr>
+      <tr><td>控制与状态</td><td>车速、转角、档位、故障码 —— 这类小数据才是它的主场</td></tr>
+      <tr><td>不走图像</td><td>相机、点云走车载以太网 / LVDS / GMSL；500 kbit/s 连一帧小图都塞不下</td></tr>
+    </tbody>
+  </table>
+
+  <div class="pf"><span>2026.11 · 三维视觉笔记</span><span class="no">04 / 09</span></div>
+</section>
+
+<!-- ============================ P5 五 + 六(1-3) ============================ -->
+<section class="page">
+  <div class="ph"><span>CAN 总线 → ROS 通信 · 读图答疑</span><span><b>05 · 06</b>　融合与同步</span></div>
+
+  <h2><span class="n">05</span>总线不会把几个传感器“拼”成一包</h2>
+  <div class="q">
+    <div class="qtag">Q5</div>
+    <div class="qbody">
+      <p>这是画图时最容易脑补错的地方。正确的心智模型是<b>分时复用的广播</b>，像微信群：谁有话说谁发一条，不存在“把几个人的话合成一句”。</p>
+    </div>
+  </div>
+
+<pre>物理层：   [0x100 车速] [0x200 转角] [0x300 车门] [0x100 车速] ...
+              ↑独立帧      ↑独立帧      ↑独立帧      ↑独立帧
+
+接收端：   按 ID 分别更新各自的变量，互不干扰
+              vehicle_speed  = 60
+              steering_angle = 30
+
+融合点：   发生在订阅端 / 算法层（ROS 节点里），不在总线上</pre>
+
+  <p>由此得到三条推论，直接决定架构图怎么画：</p>
+  <table>
+    <thead><tr><th class="c" style="width:8%">#</th><th style="width:34%">推论</th><th>画法上的后果</th></tr></thead>
+    <tbody>
+      <tr><td class="c">1</td><td>CAN 不是流程里的节点</td><td>画在箭头上（线束 + 收发器），不要画成方框</td></tr>
+      <tr><td class="c">2</td><td>驱动节点是“多路解复用器”</td><td>一个节点、多个 publisher、多个独立 Topic</td></tr>
+      <tr><td class="c">3</td><td>融合是订阅端的事</td><td>规划节点同时订阅两个 Topic，在代码里组合</td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="n">06</span>传感器不同步，ROS 怎么对齐</h2>
+  <div class="q">
+    <div class="qtag">Q6</div>
+    <div class="qbody">
+      <p>先把事实摆清楚：轮速约 100 Hz（10 ms）、IMU 约 200 Hz（5 ms）、相机约 30 Hz（33 ms），<b>相位天然错开，且永远不会自动对齐</b>。工程上是六层手段叠加使用，从下往上：</p>
+    </div>
+  </div>
+
+  <h3>1　接受“物理上就是不同步”</h3>
+  <p>CAN 分时复用决定了任一时刻总线上只有一帧。同步不是 CAN 的职责，别指望在总线层解决。</p>
+
+  <h3>2　每条消息必须带时间戳 header.stamp</h3>
+  <p>驱动节点解析完立刻打戳，优先用<b>采集时刻</b>（ECU / 传感器自己打的），退而求其次才是<b>接收时刻</b>。这是跨节点对齐的唯一契约 —— 所以 ROS 消息几乎都带 header，不是装饰。</p>
+
+  <h3>3　软件层近似同步：message_filters</h3>
+  <p><code>ApproximateTimeSynchronizer</code> 在缓冲区里找时间戳最接近的一组（容差常设 10 ms），凑齐才触发回调。代价是<b>引入延迟</b>：容差越大越容易配对，也越滞后；<code>ExactTime</code> 要求完全相等，实际几乎命不中。</p>
+
+  <div class="pf"><span>2026.11 · 三维视觉笔记</span><span class="no">05 / 09</span></div>
+</section>
+
+<!-- ============================ P6 六(4-6) ============================ -->
+<section class="page">
+  <div class="ph"><span>CAN 总线 → ROS 通信 · 读图答疑</span><span><b>06</b>　时间同步（续）</span></div>
+
+  <h3 style="margin-top:1mm;">4　硬件层对表：PPS / PTP / 硬触发</h3>
+  <p>这一层解决的是“大家的表是不是同一块表”，否则第 2、3 条都无从谈起：</p>
+  <table>
+    <thead><tr><th style="width:24%">手段</th><th>做什么</th><th class="c" style="width:14%">精度</th></tr></thead>
+    <tbody>
+      <tr><td>PPS 秒脉冲</td><td>GNSS / RTK 在整秒发脉冲，全网设备同时“对表”</td><td class="c">µs 级</td></tr>
+      <tr><td>PTP（IEEE 1588）</td><td>走车载以太网，把全网时钟同步</td><td class="c">µs 级</td></tr>
+      <tr><td>硬件触发</td><td>域控制器发 Trigger，强制相机曝光、LiDAR 扫描落在同一微秒</td><td class="c">µs 级</td></tr>
+    </tbody>
+  </table>
+
+  <h3>5　算法层：用运动模型填补空隙</h3>
+  <p>卡尔曼滤波 / ESKF 做两件事：用 IMU 角速度、加速度<b>预测</b> T₁→T₂ 之间怎么动；用最新观测<b>更新</b>修正。离散、异步的观测由此被拼成连续的状态估计 —— 这才是“融合”的真正含义。</p>
+
+  <h3>6　空间传感器还要运动补偿（Deskewing）</h3>
+  <p>LiDAR 转一圈 100 ms，这期间车已经往前走了，整帧点云本身就是歪的。要用同时段的 IMU + 轮速把点云“拉回”同一参考时刻；相机的高速运动模糊、卷帘快门畸变同理。</p>
+
+  <h3>各层职责一张表</h3>
+  <table>
+    <thead><tr><th style="width:18%">层</th><th style="width:34%">解决什么</th><th style="width:30%">典型手段</th><th class="c">量级</th></tr></thead>
+    <tbody>
+      <tr><td>物理层（CAN）</td><td>不解决，只保证帧完整</td><td>差分 + 仲裁 + CRC</td><td class="c">—</td></tr>
+      <tr><td>消息层</td><td>这份数据“几点发生”</td><td><code>header.stamp</code></td><td class="c">ms</td></tr>
+      <tr><td>软件层</td><td>哪几条算“同一时刻”</td><td><code>message_filters</code></td><td class="c">10 ms</td></tr>
+      <tr><td>硬件层</td><td>大家的钟是不是一块钟</td><td>PPS / PTP / 硬触发</td><td class="c">µs</td></tr>
+      <tr><td>算法层</td><td>用运动模型补空隙</td><td>KF / ESKF 预测-更新</td><td class="c">连续</td></tr>
+      <tr><td>感知层</td><td>一帧数据自身的畸变</td><td>Deskewing 运动补偿</td><td class="c">帧内</td></tr>
+    </tbody>
+  </table>
+
+  <h3>打戳的三条纪律</h3>
+  <p>① 优先用<b>采集时刻</b>，拿不到才退到接收时刻，并在消息里注明；② 先对表再谈时间戳 —— 没有 PTP / PPS 时，<code>rosbag</code> 回放配合 <code>use_sim_time</code> 会让 wall clock 直接失效；③ 时间戳一旦发出就是契约，下游只读不改，需要插值就在订阅端做，不要回写 header。</p>
+
+  <div class="quote">
+    <b>工程结论：</b>驱动节点只做三件事 —— 解析字节、打时间戳、发 Topic，它不做融合；融合放在订阅端与算法层。这一点正好决定了图 1 里从驱动节点出去的是“多个独立 Topic”，而不是“一个融合后的大消息”。
+  </div>
+
+  <div class="pf"><span>2026.11 · 三维视觉笔记</span><span class="no">06 / 09</span></div>
+</section>
+
+<!-- ============================ P7 图 1 ============================ -->
+<section class="page">
+  <div class="ph"><span>CAN 总线 → ROS 通信 · 读图答疑</span><span><b>图 1</b>　CAN 链路</span></div>
+
+  <h2><span class="n">07</span>图 1：CAN 链路怎么画才对（Q1–Q5）</h2>
+  <p class="lead">这张图回答 Q1～Q5。它是“底盘 ECU → 总线 → 接口卡 → 驱动节点 → Topic → 订阅者”这条链路的定稿，也是把两个常见错法纠正过来的版本。</p>
+
+  <figure>
+    <img src="2026-11-CAN链路-Q1-Q5-图1-CAN链路.png" alt="图 1 · CAN 链路（Q1–Q5）">
+    <figcaption>图 1　CAN 链路：从底盘到规划节点（回答 Q1–Q5；2880 × 1840，2× 高清）</figcaption>
+  </figure>
+
+  <table>
+    <thead><tr><th style="width:36%">图上位置</th><th class="c" style="width:16%">对应疑问</th><th>画法要点</th></tr></thead>
+    <tbody>
+      <tr><td>第 2 框 CAN 收发器 + 接口卡</td><td class="c">Q1 / Q2</td><td>总线在链路上，不在流程节点里；<code>can0</code> 是软件看见的入口</td></tr>
+      <tr><td>第 3 框 ROS 驱动节点</td><td class="c">Q3 / Q4</td><td>标注“就是发布者本身”：按 DBC 解析 → 封装 msg</td></tr>
+      <tr><td><code>publish()</code> 那条箭头</td><td class="c">Q5</td><td>发布是节点内的一次函数调用，没有“发布节点”这一跳</td></tr>
+      <tr><td>第 4 框 Topic</td><td class="c">Q3</td><td>多个独立 Topic，不是一个“大杂烩”消息</td></tr>
+      <tr><td>右侧“反向下行”</td><td class="c">—</td><td>控制指令原路返回：<code>/cmd_vel</code> → 驱动节点 → <code>cansend</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="bad" style="margin-top:2.4mm;"><span class="m">✗</span>硬件 → CAN → 驱动节点 → “ROS 节点发布” → 订阅者：把 CAN 画成节点，把发布画成独立的中间环节。</div>
+  <div class="good" style="margin-top:1.6mm;"><span class="m">✓</span>硬件 ⇄ CAN 总线 ⇄ 接口卡 ⇄ 驱动节点（自己 publish）→ Topic → 订阅者。<b>总线不是节点，节点自己发。</b></div>
+
+  <div class="pf"><span>2026.11 · 三维视觉笔记</span><span class="no">07 / 09</span></div>
+</section>
+
+<!-- ============================ P8 图 2 ============================ -->
+<section class="page">
+  <div class="ph"><span>CAN 总线 → ROS 通信 · 读图答疑</span><span><b>图 2</b>　通信机制</span></div>
+
+  <h2><span class="n">08</span>图 2：Topic / Service / Action 怎么选（Q7）</h2>
+  <p class="lead">这张图回答“规划告诉控制往左转，该用哪种通信”，以及“上位机让系统导航到 A 点，又该用哪种”。同一个 ROS 图里三种机制可以混用，区别不在新旧，而在数据是“一直流”“问一次”还是“跑很久”。</p>
+
+  <figure>
+    <img src="2026-11-CAN链路-Q1-Q5-图2-通信机制.png" alt="图 2 · 三种通信机制（Q7）">
+    <figcaption>图 2　Topic / Service / Action 对比（回答 Q7；3000 × 2128，2× 高清）</figcaption>
+  </figure>
+
+  <table>
+    <thead><tr><th style="width:16%">机制</th><th style="width:24%">类比</th><th>判据</th></tr></thead>
+    <tbody>
+      <tr><td><b>Topic</b></td><td>广播电台</td><td>数据一直在变，丢一帧无所谓；异步、一对多</td></tr>
+      <tr><td><b>Service</b></td><td>打电话查话费</td><td>问一次答一次，中间没有进度；同步阻塞</td></tr>
+      <tr><td><b>Action</b></td><td>点外卖</td><td>跑得久、要看进度、可能中途反悔</td></tr>
+    </tbody>
+  </table>
+
+  <h3>两个容易答错的点</h3>
+  <p>① “规划让控制左转”用 <b>Topic</b> 就行（<code>/cmd_vel</code> 这类持续指令流），不需要 Service；② “上位机下发一次导航任务”用 <b>Action</b>（Nav2 的 <code>NavigateToPose</code>），不是 Service —— 因为要进度、要能取消。</p>
+
+  <div class="note">
+    <span class="t">底层的真相</span><br>
+    Action 不是第四套协议：Goal / Cancel / Result 走 Service，Feedback / Status 走 Topic。“能看进度 + 能取消”是拼出来的能力，这也正是导航、抓取、泊车都用 Action 的原因。
+  </div>
+
+  <div class="pf"><span>2026.11 · 三维视觉笔记</span><span class="no">08 / 09</span></div>
+</section>
+
+<!-- ============================ P9 自查 + 附录 ============================ -->
+<section class="page">
+  <div class="ph"><span>CAN 总线 → ROS 通信 · 读图答疑</span><span><b>09 · 10</b>　自查与附录</span></div>
+
+  <h2><span class="n">09</span>画图前先过一遍的自查清单</h2>
+  <table>
+    <thead><tr><th class="c" style="width:8%">#</th><th style="width:40%">容易画错</th><th>正确做法</th></tr></thead>
+    <tbody>
+      <tr><td class="c">1</td><td>把 CAN 画成一个方框节点</td><td>它是链路与介质，应画在箭头上（线束 + 收发器）</td></tr>
+      <tr><td class="c">2</td><td>在驱动节点后面再加一个“发布”环节</td><td>publish 是节点自己的动作，箭头标注函数名即可</td></tr>
+      <tr><td class="c">3</td><td>在总线上画“数据融合”</td><td>融合只发生在订阅端 / 算法层，总线上永远一帧一件事</td></tr>
+      <tr><td class="c">4</td><td>用一个 Topic 装下所有传感器</td><td>一个驱动节点、多个 publisher、多个独立 Topic</td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="n">10</span>附：图片与可编辑源文件</h2>
+  <table>
+    <thead><tr><th style="width:46%">文件</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td><code>assets/2026-11-CAN链路-Q1-Q5-图1-CAN链路.png</code></td><td>图 1，回答 Q1–Q5，2880 × 1840</td></tr>
+      <tr><td><code>assets/2026-11-CAN链路-Q1-Q5-图2-通信机制.png</code></td><td>图 2，回答 Q7，3000 × 2128</td></tr>
+      <tr><td><code>assets/_make_can_chain.html</code></td><td>图 1 源文件（单文件 HTML，无外部依赖）</td></tr>
+      <tr><td><code>assets/_make_ros_comms.html</code></td><td>图 2 源文件</td></tr>
+      <tr><td><code>2026-11-CAN总线到ROS-读图答疑-Q1-Q7</code><br><span style="color:#94a3b8">.md / .pdf</span></td><td>本笔记的两个版本：Markdown 版便于检索摘抄，PDF 版即本文件</td></tr>
+    </tbody>
+  </table>
+
+  <h3>重出图 / 重出 PDF</h3>
+<pre>CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+cd "assets"   # 在本笔记所在目录执行
+
+# 改完 HTML 源后，重出 2× PNG
+"$CHROME" --headless=new --disable-gpu --hide-scrollbars \
+  --force-device-scale-factor=2 --window-size=1440,920 \
+  --screenshot="2026-11-CAN链路-Q1-Q5-图1-CAN链路.png" "file://$PWD/_make_can_chain.html"
+
+"$CHROME" --headless=new --disable-gpu --hide-scrollbars \
+  --force-device-scale-factor=2 --window-size=1500,1064 \
+  --screenshot="2026-11-CAN链路-Q1-Q5-图2-通信机制.png" "file://$PWD/_make_ros_comms.html"
+
+# Markdown/HTML 排版版重出 PDF（A4，无页眉页脚）
+"$CHROME" --headless=new --disable-gpu --no-pdf-header-footer \
+  --print-to-pdf="2026-11-CAN总线到ROS-读图答疑-Q1-Q7.pdf" \
+  "file://$PWD/_make_note_pdf.html"</pre>
+
+  <h3>关于这份文档</h3>
+  <p>正文用宋体（Songti SC）排 10.4pt / 1.78 倍行距，标题与表格用苹方；A4 满版，每页固定页眉页脚与页码，图表统一编号。内容与 Markdown 版一致，区别只在阅读体验：<b>Markdown 适合检索与摘抄，PDF 适合从头读到尾</b>。若两者出现不一致，以本 PDF 的内容为准（它最后更新）。</p>
+
+  <div class="pf"><span>2026.11 · 三维视觉笔记</span><span class="no">09 / 09</span></div>
+</section>
+
+<pre id="dbg" style="display:none"></pre>
+<script>
+window.addEventListener('load', function () {
+  if (location.search.indexOf('flat') >= 0) {
+    document.body.style.background = '#fff';
+    document.querySelectorAll('.page').forEach(function (p) {
+      p.style.margin = '0'; p.style.boxShadow = 'none'; p.style.outline = '1px solid #ff0000';
+    });
+  }
+  var out = [];
+  document.querySelectorAll('.page').forEach(function (p, i) {
+    var pr = p.getBoundingClientRect();
+    var maxBottom = 0;
+    Array.prototype.forEach.call(p.children, function (c) {
+      if (c.classList.contains('pf') || c.id === 'dbg') return;
+      var r = c.getBoundingClientRect();
+      if (r.bottom - pr.top > maxBottom) maxBottom = r.bottom - pr.top;
+    });
+    var limit = p.clientHeight - 45; // ~12mm 安全区
+    var over = Math.round(maxBottom - limit);
+    out.push((i + 1) + ':' + (over > 0 ? 'TIGHT +' + over : 'ok') + ' bottom=' + Math.round(maxBottom) + '/limit=' + Math.round(limit));
+  });
+  document.getElementById('dbg').textContent = out.join(' | ');
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>图 2 · 五步流水线</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #F7F9FC; }
+  body {
+    width: 1560px; padding: 40px 40px 20px;
+    font-family: "PingFang SC", "Hiragino Sans GB", sans-serif;
+    color: #0F172A; -webkit-font-smoothing: antialiased;
+  }
+  .m { font-family: "SF Mono", Menlo, monospace; font-size: .92em; background: #F1F5F9;
+       padding: 1px 4px; border-radius: 3px; color: #334155; }
+
+  /* ---------- 头部 ---------- */
+  header { position: relative; padding-bottom: 14px; }
+  .ttl { font-size: 31px; font-weight: 700; letter-spacing: .2px; }
+  .ttl b { color: #2563EB; }
+  .sub { margin-top: 9px; font-size: 14.5px; color: #64748B; }
+  .legend { margin-top: 12px; font-size: 13px; color: #64748B; display: flex; gap: 26px; }
+  .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; vertical-align: 1px; }
+  .b { background: #2563EB; } .g { background: #05825F; } .p { background: #7C3AED; } .o { background: #BE3E0A; }
+  .badge { position: absolute; right: 0; top: 2px; font-size: 12.5px; color: #2563EB;
+           background: #EDF4FF; border: 1px solid #C7DAFC; border-radius: 999px; padding: 5px 13px; }
+
+  /* ---------- 表格 ---------- */
+  .tablebox { position: relative; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; background: #fff; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  th, td { border-bottom: 1px solid #F1F5F9; border-right: 1px solid #F1F5F9; vertical-align: middle; }
+  th:last-child, td:last-child { border-right: 0; }
+  tr:last-child td { border-bottom: 0; }
+  thead th { height: 56px; background: #FCFDFE; padding: 8px 14px; text-align: left; }
+  td { padding: 9px 14px; font-size: 14.2px; line-height: 1.44; }
+  .c0 { width: 156px; }
+  .c1, .c2, .c3, .c4, .c5 { width: 264px; }
+
+  .hh { font-size: 13px; color: #64748B; }
+  .st { display: flex; align-items: center; gap: 8px; }
+  .st .no { font-family: "SF Mono", Menlo, monospace; font-size: 10.5px; font-weight: 700;
+            color: #1D4ED8; background: #EEF4FF; border: 1px solid #D5E3FD; border-radius: 4px; padding: 2px 5px; }
+  .st b { font-size: 15px; font-weight: 600; }
+  .en { margin-top: 4px; font-family: "SF Mono", Menlo, monospace; font-size: 11.5px; color: #94A3B8; }
+
+  .sname { display: flex; align-items: flex-start; gap: 9px; }
+  .sname i { width: 9px; height: 9px; border-radius: 50%; margin-top: 7px; flex: none; }
+  .sname b { font-size: 15px; font-weight: 600; display: block; }
+  .sname span { font-size: 11.5px; color: #94A3B8; display: block; margin-top: 2px; }
+
+  td .l2 { display: block; margin-top: 2px; font-size: 11.8px; color: #94A3B8; }
+  .topic { display: inline-block; margin-top: 3px; font-family: "SF Mono", Menlo, monospace; font-size: 11.5px;
+           color: #1D4ED8; background: #EEF4FF; border-radius: 3px; padding: 2px 5px; }
+  .msg { font-size: 14px; font-weight: 600; color: #0F172A; }
+
+  /* 内核 / 用户态 分界 */
+  td.cutcol, th.cutcol { border-left: 2px dashed #C2410C; }
+
+  /* ---------- 图注三条 ---------- */
+  .notes { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-top: 14px; }
+  .note { border: 1px solid #E2E8F0; border-radius: 10px; background: #fff; padding: 11px 14px; }
+  .note b { display: block; font-size: 13.5px; font-weight: 600; margin-bottom: 3px; }
+  .note span { font-size: 12.3px; color: #475569; line-height: 1.5; }
+
+  /* ---------- 驱动边界带 ---------- */
+  .band { margin-top: 14px; padding: 13px 0 14px; border: 1px solid #E7EDF5; border-radius: 12px; background: #FBFCFE;
+          display: grid; grid-template-columns: 156px 264px 264px 264px 264px 264px; }
+  .lead { grid-column: 1 / 4; padding: 2px 20px 0 16px; }
+  .lead .kick { font-size: 11px; font-weight: 600; letter-spacing: .6px; color: #C2410C; }
+  .lead .big { margin-top: 5px; font-size: 17px; font-weight: 700; line-height: 1.4; }
+  .lead .big em { font-style: normal; color: #2563EB; }
+  .lead .bd { margin-top: 6px; font-size: 12.3px; color: #475569; line-height: 1.6; }
+  .lead .q { margin-top: 9px; font-size: 12px; color: #334155; background: #F1F5F9; border-left: 3px solid #94A3B8;
+             border-radius: 0 6px 6px 0; padding: 6px 9px; line-height: 1.55; }
+
+  .card { margin: 0 0 0 12px; border: 1px solid #E2E8F0; border-radius: 10px; background: #fff; padding: 10px 12px; }
+  .card .h { display: flex; align-items: baseline; justify-content: space-between; }
+  .card .h b { font-size: 13px; font-weight: 700; }
+  .card .tag { font-size: 10px; border-radius: 999px; padding: 2px 7px; }
+  .card p { margin-top: 6px; font-size: 11.6px; line-height: 1.55; color: #475569; }
+  .card .fine { margin-top: 5px; font-size: 11px; color: #94A3B8; line-height: 1.45; }
+  .k3 { border-color: #CBD5E1; background: #F8FAFC; } .k3 .h b { color: #475569; }
+  .k3 .tag { color: #475569; background: #E2E8F0; }
+  .k4 { border-color: #F5C9A8; background: #FFF9F4; } .k4 .h b { color: #BE3E0A; }
+  .k4 .tag { color: #BE3E0A; background: #FFEDE0; }
+  .k5 { border-color: #BFD5FA; background: #F6FAFF; } .k5 .h b { color: #1D4ED8; }
+  .k5 .tag { color: #1D4ED8; background: #E4EEFE; }
+
+  .cap { margin-top: 13px; font-size: 11.5px; color: #94A3B8; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="ttl">常用传感器的流水线：<b>同一套五步，七种传感器各走一遍</b></div>
+  <div class="sub">纵向是阶段，横向是传感器。留意：第 1 步决定“物理含义”，第 2–3 步各家完全不同，第 4–5 步几乎收敛成同一套写法。</div>
+  <div class="legend">
+    <span><i class="b"></i>车外感知</span>
+    <span><i class="g"></i>底盘与本体</span>
+    <span><i class="p"></i>定位</span>
+    <span><i class="o"></i>车身</span>
+  </div>
+  <div class="badge">图 2 / 4 · 流水线</div>
+</header>
+
+<div class="tablebox">
+  <table>
+    <thead>
+      <tr>
+        <th class="c0"><div class="hh">传感器 ↓　阶段 →</div></th>
+        <th><div class="st"><span class="no">01</span><b>传感器前端</b></div><div class="en">physics → analog → digital</div></th>
+        <th><div class="st"><span class="no">02</span><b>接口与协议</b></div><div class="en">data → frame → bits</div></th>
+        <th><div class="st"><span class="no">03</span><b>域控接收</b></div><div class="en">phy → dma → socket</div></th>
+        <th class="cutcol"><div class="st"><span class="no">04</span><b>驱动解析</b></div><div class="en">parse → stamp</div></th>
+        <th><div class="st"><span class="no">05</span><b>ROS 消息</b></div><div class="en">message → topic</div></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><div class="sname"><i class="b"></i><div><b>激光雷达</b><span>LiDAR</span></div></div></td>
+        <td>激光回波 → APD 电流 → TDC 测飞行时间<span class="l2">905 / 1550 nm</span></td>
+        <td>UDP 包 ~1200 B<span class="l2">1000BASE-T1 · 1 Gbit/s</span></td>
+        <td>网卡 DMA → 环形缓冲 → <span class="m">recvfrom()</span></td>
+        <td class="cutcol">解算方位/距离 → 去畸变 → 打戳</td>
+        <td><span class="msg">PointCloud2</span><br><span class="topic">/lidar/points</span></td>
+      </tr>
+      <tr>
+        <td><div class="sname"><i class="b"></i><div><b>摄像头</b><span>Camera</span></div></div></td>
+        <td>CMOS 曝光 → ISP（去马赛克/降噪/伽马）→ YUV<span class="l2">30 fps</span></td>
+        <td>GMSL2 同轴 + PoC 供电<span class="l2">~6 Gbit/s，最长 15 m</span></td>
+        <td>解串器 → MIPI CSI-2 → V4L2</td>
+        <td class="cutcol">取帧 → 转格式 → 打戳（曝光时刻）</td>
+        <td><span class="msg">Image</span><br><span class="topic">/camera/image_raw</span></td>
+      </tr>
+      <tr>
+        <td><div class="sname"><i class="b"></i><div><b>毫米波雷达</b><span>Radar</span></div></div></td>
+        <td>FMCW 调频连续波 → 差频 FFT → 距离/速度 → DOA 测角</td>
+        <td>CAN FD 8 B/帧<span class="l2">或 100BASE-T1（4D 雷达）</span></td>
+        <td><span class="m">can0</span> 收帧 / 以太网 socket</td>
+        <td class="cutcol">按 DBC 解析目标列表 → 坐标变换 → 打戳</td>
+        <td><span class="msg">RadarScan</span><br><span class="topic">/radar/objects</span></td>
+      </tr>
+      <tr>
+        <td><div class="sname"><i class="b"></i><div><b>超声波</b><span>USS</span></div></div></td>
+        <td>40 kHz 回波 → 飞行时间 → 距离<span class="l2">0.2–5 m</span></td>
+        <td>LIN 单线<span class="l2">20 kbit/s，12 探头分几条</span></td>
+        <td>LIN 主节点 → 网关 → <span class="m">can1</span></td>
+        <td class="cutcol">距离换算 → 按探头 ID 组装 → 打戳</td>
+        <td><span class="msg">Range</span><br><span class="topic">/uss/ranges</span></td>
+      </tr>
+      <tr>
+        <td><div class="sname"><i class="g"></i><div><b>IMU</b><span>惯性测量</span></div></div></td>
+        <td>MEMS 陀螺/加速度计 → 电容变化 → ADC<span class="l2">100–1000 Hz</span></td>
+        <td>SPI 板级总线<span class="l2">远距改用 RS–422</span></td>
+        <td>SPI 控制器 / 字符设备 <span class="m">/dev/spidev</span></td>
+        <td class="cutcol">零偏/温补/标定 → 坐标轴对齐 → 打戳</td>
+        <td><span class="msg">Imu</span><br><span class="topic">/imu/data</span></td>
+      </tr>
+      <tr>
+        <td><div class="sname"><i class="p"></i><div><b>GNSS / RTK</b><span>定位</span></div></div></td>
+        <td>卫星伪距/载波相位 → PVT 解算<span class="l2">1–20 Hz</span></td>
+        <td>UART 115200<span class="l2">NMEA / UBX 报文</span></td>
+        <td><span class="m">/dev/ttyUSB0</span> 串口驱动</td>
+        <td class="cutcol">LLA → ENU 坐标转换 → 打戳</td>
+        <td><span class="msg">NavSatFix</span><br><span class="topic">/gnss/fix</span></td>
+      </tr>
+      <tr>
+        <td><div class="sname"><i class="o"></i><div><b>底盘 CAN</b><span>车速/转角</span></div></div></td>
+        <td>霍尔/磁电传感器 → 脉冲计数 → 转速<span class="l2">50–100 Hz</span></td>
+        <td>CAN 双绞线 500 kbit/s<span class="l2">两端 120 Ω</span></td>
+        <td>SocketCAN <span class="m">can0</span>（内核网络设备）</td>
+        <td class="cutcol">按 DBC 拆位 → 乘系数加偏移 → 打戳</td>
+        <td><span class="msg">VehicleStatus</span><br><span class="topic">/vehicle/speed</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="notes">
+  <div class="note"><b>① 前端不可替代</b><span>同样的物理量，只有传感器自己能“翻译”成数字，驱动拿到的已经是字节。</span></div>
+  <div class="note"><b>② 中段各显神通</b><span>以太网、GMSL、LIN、SPI、串口、CAN —— 这一段是硬件工程师的战场。</span></div>
+  <div class="note"><b>③ 尾段高度统一</b><span>到了驱动节点，全部收敛成“解析 → 打戳 → 发 Topic”，下游只认消息类型。</span></div>
+</div>
+
+<div class="band">
+  <div class="lead">
+    <div class="kick">驱动边界 · 看 ③ 与 ④ 之间那条虚线</div>
+    <div class="big">右边两列，才是<em> ROS 驱动节点</em></div>
+    <div class="bd">③ 及左边的一切，在传感器、线缆和内核里。④⑤ 是一个普通用户态进程：它拿到 ③ 交出的 fd / socket，解析、打戳，再 publish 出去。</div>
+    <div class="q"><b>判据：</b>拔掉 ROS，④⑤ 还能单独输出数据吗？<br>能 → 里面有一颗驱动核；不能 → 它只是适配层。</div>
+  </div>
+  <div class="card k3">
+    <div class="h"><b>③ 内核侧</b><span class="tag">硬件驱动</span></div>
+    <p>DMA · 环形缓冲 · 设备节点<br>V4L2 / can0 / tty / spidev / socket</p>
+    <div class="fine">交给节点一个 fd 或 socket，自己不认 ROS</div>
+  </div>
+  <div class="card k4">
+    <div class="h"><b>④ 用户态驱动</b><span class="tag">协议与语义</span></div>
+    <p>协议解码 · 标定 · 坐标变换 · 打戳</p>
+    <div class="fine">属于驱动栈，但不属于内核；崩了设备还在</div>
+  </div>
+  <div class="card k5">
+    <div class="h"><b>⑤ ROS 适配</b><span class="tag">消息契约</span></div>
+    <p>msg 类型 · frame_id · QoS · publish</p>
+    <div class="fine">下游只认消息，不认硬件；可被 rosbag 顶替</div>
+  </div>
+</div>
+
+<div class="cap">图 2 · 五步流水线：前端在传感器里，中段在硬件里，尾段才是你写的驱动节点</div>
+
+</body>
+</html>

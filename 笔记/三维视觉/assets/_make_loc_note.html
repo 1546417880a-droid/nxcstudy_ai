@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>自动驾驶定位 · 读图说明</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { background: #eef1f6; }
+  body { font-family: "Songti SC", "Songti TC", "STSong", serif; color: #1b2432; font-size: 10.2pt; line-height: 1.75; }
+  .page { width: 210mm; height: 297mm; background: #fff; position: relative; padding: 15mm 17mm 16mm; page-break-after: always; overflow: hidden; margin: 0 auto; }
+  .page:last-child { page-break-after: auto; }
+  @media screen { .page { box-shadow: 0 1px 6px rgba(15,23,42,.12); margin-bottom: 8mm; } }
+
+  .ph { display: flex; justify-content: space-between; align-items: baseline; font-family: "PingFang SC", sans-serif;
+        font-size: 7.4pt; letter-spacing: .4px; color: #94a3b8; border-bottom: .4pt solid #e5eaf2; padding-bottom: 2.2mm; }
+  .ph b { color: #475569; font-weight: 600; }
+  .pf { position: absolute; left: 17mm; right: 17mm; bottom: 8mm; display: flex; justify-content: space-between;
+        font-family: "PingFang SC", sans-serif; font-size: 7.2pt; color: #a3aec0; border-top: .4pt solid #eef2f7; padding-top: 2mm; }
+  .pf .no { font-family: Menlo, monospace; color: #64748b; }
+
+  h2 { font-family: "PingFang SC", sans-serif; font-size: 14.5pt; font-weight: 600; color: #0f172a; margin: 4mm 0 1.6mm; }
+  h2 .n { display: inline-block; font-family: Menlo, monospace; font-size: 8.4pt; font-weight: 700; color: #1d4ed8;
+          background: #eef4ff; border: .4pt solid #c7dafc; border-radius: 1mm; padding: .6mm 1.5mm; margin-right: 2.4mm; vertical-align: 2pt; }
+  h3 { font-family: "PingFang SC", sans-serif; font-size: 10.4pt; font-weight: 600; color: #1e3a5f; margin: 3.6mm 0 .8mm; }
+  p { margin: 1.5mm 0; text-align: justify; }
+  b { font-weight: 600; color: #0f172a; }
+  em { font-style: normal; background: linear-gradient(transparent 62%, #dbeafe 62%); padding: 0 .4mm; }
+
+  figure { margin: 1.6mm 0 2mm; }
+  figure img { width: 100%; display: block; border: .4pt solid #e2e8f0; border-radius: 1.2mm; }
+  figcaption { font-family: "PingFang SC", sans-serif; font-size: 7.6pt; color: #94a3b8; margin-top: 1.4mm; }
+
+  table { width: 100%; border-collapse: collapse; font-family: "PingFang SC", sans-serif; font-size: 8.4pt; line-height: 1.55; margin: 2mm 0; }
+  th, td { border: .4pt solid #dbe3ee; padding: 1.5mm 2mm; vertical-align: top; text-align: left; }
+  thead th { background: #f5f8fc; color: #334155; font-weight: 600; }
+  tbody tr:nth-child(even) td { background: #fbfcfe; }
+  td.c { text-align: center; }
+
+  ul { margin: 1.4mm 0 1.4mm 4.4mm; }
+  li { margin: .6mm 0; }
+  .pts { background: #f8fafc; border: .4pt solid #e6edf6; border-left: 2.4pt solid #2563eb; border-radius: 1mm; padding: 2.2mm 3.2mm 2.2mm 1mm; margin: 2mm 0; }
+  .pts li { font-family: "PingFang SC", sans-serif; font-size: 9pt; line-height: 1.6; margin: 1mm 0; }
+  .note { background: #f6f9fd; border: .4pt solid #dbe7f6; border-left: 2.6pt solid #0d9488; border-radius: 1mm;
+          padding: 2.4mm 3.2mm; margin: 2.2mm 0; font-family: "PingFang SC", sans-serif; font-size: 8.8pt; line-height: 1.65; }
+  .quote { font-family: "PingFang SC", sans-serif; font-size: 9pt; color: #334155; background: #f8fafc;
+           border: .4pt solid #e6edf6; border-radius: 1.2mm; padding: 2.8mm 4mm; margin: 2.4mm 0; }
+  .quote b { color: #1d4ed8; }
+  code { font-family: "SF Mono", Menlo, monospace; font-size: 8.6pt; background: #f1f5f9; padding: .2mm .8mm; border-radius: .8mm; }
+  pre { font-family: "SF Mono", Menlo, monospace; font-size: 7.6pt; line-height: 1.6; background: #f7f9fc;
+        border: .4pt solid #e3eaf3; border-left: 2.4pt solid #2563eb; border-radius: 1mm; padding: 2.2mm 3.2mm; margin: 2mm 0; white-space: pre-wrap; }
+
+  /* cover */
+  .cover { padding: 20mm 20mm 16mm; }
+  .kicker { font-family: "PingFang SC", sans-serif; font-size: 8pt; letter-spacing: 2px; color: #2563eb; font-weight: 600; }
+  .cover h1 { font-family: "PingFang SC", sans-serif; font-size: 27pt; font-weight: 700; line-height: 1.32; margin: 4mm 0 3mm; color: #0b1220; }
+  .cover .sub { font-family: "PingFang SC", sans-serif; font-size: 11pt; color: #64748b; letter-spacing: .3px; }
+  .rule { height: 1.2pt; background: #0f172a; margin: 6mm 0 5mm; width: 30mm; }
+  .cover .lead { font-size: 10pt; line-height: 1.9; color: #24303f; }
+  .cover .thumbs { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; margin-top: 6mm; }
+  .cover .thumbs img { width: 100%; border: .4pt solid #e2e8f0; border-radius: 1mm; display: block; }
+  .cover .meta { position: absolute; left: 20mm; right: 20mm; bottom: 16mm; font-family: "PingFang SC", sans-serif;
+                 font-size: 7.6pt; color: #94a3b8; display: flex; justify-content: space-between; border-top: .4pt solid #e6edf6; padding-top: 2.4mm; }
+</style>
+</head>
+<body>
+
+<!-- ================= 封面 ================= -->
+<section class="page cover">
+  <div class="kicker">三维视觉 · 自动驾驶定位</div>
+  <h1>从技术全景<br>到一次隧道穿越</h1>
+  <div class="sub">自动驾驶定位 · 九张图的读法</div>
+  <div class="rule"></div>
+  <div class="lead">
+    定位不是一个模块，是一套<em>排班表</em>：绝对定位给锚点，相对定位保连续，环境匹配做精校，融合算法把它们拧成一个<em>带方差的位姿</em>。<br><br>
+    这份文档逐张解释九张图：前三张讲"有哪些手段、怎么组织、时间上是什么样"，中间四张是四张放大镜（坐标系、滤波器、耦合方式、地图），最后两张是落地图（下游怎么降级、地库怎么布点）。
+  </div>
+  <div class="thumbs">
+    <img src="./2026-11-自动驾驶定位-图1-技术全景.png" alt="">
+    <img src="./2026-11-自动驾驶定位-图3-隧道时序.png" alt="">
+    <img src="./2026-11-自动驾驶定位-图2-分层架构.png" alt="">
+    <img src="./2026-11-自动驾驶定位-图9-地库AVP.png" alt="">
+  </div>
+  <div class="meta"><span>2026-11 · 笔记 / 读图说明</span><span>9 张图 · 13 页</span></div>
+</section>
+
+<!-- ================= 总览 ================= -->
+<section class="page">
+  <div class="ph"><span><b>自动驾驶定位</b> · 读图说明</span><span>〇、九张图一览</span></div>
+
+  <h2><span class="n">〇</span>九张图各回答什么</h2>
+  <p>先看表，再看图。每张图都只回答一个问题；九张合起来，才是"定位"这件事的完整轮廓。</p>
+
+  <table>
+    <thead><tr><th style="width:8%">#</th><th style="width:34%">回答的问题</th><th>一句话结论</th></tr></thead>
+    <tbody>
+      <tr><td class="c">1</td><td>定位到底有哪些技术</td><td>四类信息来源，各自都有天花板；场景不同，主角不同</td></tr>
+      <tr><td class="c">2</td><td>这些技术怎么组织</td><td>四层数据流，加一条自检回路；频率从 200 Hz 到 5 Hz</td></tr>
+      <tr><td class="c">3</td><td>断掉时会发生什么</td><td>32 秒四次接力，误差被按在 0.3 m 以下</td></tr>
+      <tr><td class="c">4</td><td>位姿到底在哪个系</td><td>五个系、四次变换，顺序不可交换</td></tr>
+      <tr><td class="c">5</td><td>融合有哪两种范式</td><td>递推求快，因子图求准；ESKF 约等于两帧因子图</td></tr>
+      <tr><td class="c">6</td><td>GNSS 在哪一层进来</td><td>解算之后进来叫松，解算之中进来叫紧</td></tr>
+      <tr><td class="c">7</td><td>地图匹配用的是什么</td><td>拓扑筛、语义对、几何压，三层递进</td></tr>
+      <tr><td class="c">8</td><td>置信度往下游怎么用</td><td>协方差要变成车速、车距和接管请求</td></tr>
+      <tr><td class="c">9</td><td>没有 GNSS 的地库怎么办</td><td>UWB 的精度由锚点几何决定，不是由硬件</td></tr>
+    </tbody>
+  </table>
+
+  <div class="quote">
+    <b>一句话主线</b>：图 1 说"有哪些手段"，图 2 说"怎么组织"，图 3 说"组织起来在时间上是什么样"；图 4–7 是四张放大镜，图 8–9 是两张落地图。
+  </div>
+
+  <h3>为什么是这九张</h3>
+  <p>定位这个话题最容易讲成"技术清单"：GNSS、IMU、LiDAR、视觉、UWB 一路排下去。但清单不能回答两个真问题——<b>它们怎么协同</b>，以及<b>断掉一个会怎样</b>。所以这套图的重心不在"有哪几种技术"，而在图 2 的层、图 3 的时间轴，以及图 8 的降级链。</p>
+
+  <div class="note">
+    <b>读法建议</b>：先看第 1、2 页建立骨架，再看第 3 页（隧道）理解"为什么必须融合"，最后按需翻中间的放大镜。<br>
+    如果只有十分钟：图 1 → 图 3 → 图 8，主线就通了。
+  </div>
+
+  <div class="pf"><span>自动驾驶定位 · 读图说明</span><span class="no">02</span></div>
+</section>
+
+<!-- ================= 图 1 ================= -->
+<section class="page">
+  <div class="ph"><span><b>自动驾驶定位</b> · 读图说明</span><span>一、技术全景</span></div>
+
+  <h2><span class="n">01</span>四类原理：没有一种技术是全能的</h2>
+  <p>这四类不是"四种方案备选"，是四种<b>信息来源</b>：绝对定位给地球坐标，相对定位给自身运动，环境匹配给局部校正，融合负责把它们拧成一个带置信度的位姿。</p>
+
+  <figure>
+    <img src="./2026-11-自动驾驶定位-图1-技术全景.png" alt="图 1 · 技术全景">
+    <figcaption>图 1 · 四类原理并排，每类三张卡：是什么 → 能做到多少 → 卡在哪</figcaption>
+  </figure>
+
+  <ul class="pts">
+    <li><b>每列第三行都是"卡在哪"</b>。定位选型不是选"谁更准"，是选"你能接受哪种失效"——RTK 掉固定解、IMU 漂移、点云被雨雾打散，失效方式完全不同。</li>
+    <li><b>精度不是一个数，是一个前提</b>。RTK 的厘米级前提是固定解，固定解的前提是"看得见天"。条件一破，精度是断崖式归零，不是缓慢下降。</li>
+    <li><b>底部的场景条是全图的落点</b>：高速靠 GNSS + 地图，城市靠视觉语义 + LiDAR，隧道靠 IMU / DR，地库靠 UWB + 点云。同一条路，四段路四个主角。</li>
+  </ul>
+
+  <div class="note">读这张图时容易漏掉的是<b>列与列之间其实是互补关系</b>：绝对定位的短板（遮挡）正好是相对定位的长处（不依赖外部），相对定位的短板（漂移）又正好是环境匹配的长处（绝对约束）。互补性才是这张图真正想说的。</div>
+
+  <div class="pf"><span>自动驾驶定位 · 读图说明</span><span class="no">03</span></div>
+</section>
+
+<!-- ================= 图 2 ================= -->
+<section class="page">
+  <div class="ph"><span><b>自动驾驶定位</b> · 读图说明</span><span>二、分层架构</span></div>
+
+  <h2><span class="n">02</span>四层数据流，加一条自检回路</h2>
+  <p>从上到下是数据流，从下到上是更新频率：越往下越快，越往上越稳。融合层的存在，就是为了让这两头能对上。</p>
+
+  <figure>
+    <img src="./2026-11-自动驾驶定位-图2-分层架构.png" alt="图 2 · 分层架构">
+    <figcaption>图 2 · 传感器 → 前端解算 → 融合优化 → 输出，右侧虚线为自检回路</figcaption>
+  </figure>
+
+  <ul class="pts">
+    <li><b>前端解算层被拆成三支</b>（绝对 / 相对 / 环境），这三支正是图 1 四类里去掉"融合"之后剩下的三个——融合不属于前端，它是横向的一层。</li>
+    <li><b>右侧那条虚线是自检回路</b>。置信度和故障检测不只是"输出一个数"，它会反向触发降级、切换源、重初始化。</li>
+    <li><b>底部频率梯队是"为什么要分层"的答案</b>：IMU 200 Hz、相机 30 Hz、GNSS 5 Hz。快的管短时，慢的管全局，中间必须有东西把它们对齐。</li>
+  </ul>
+
+  <div class="note">层与层之间传递的不是数字，是<b>带不确定度的数字</b>。少了协方差，上一层就没法判断"这一帧该信多少"——这也是为什么图 8 要把 Σ 一路带到规划。</div>
+
+  <div class="pf"><span>自动驾驶定位 · 读图说明</span><span class="no">04</span></div>
+</section>
+
+<!-- ================= 图 3 ================= -->
+<section class="page">
+  <div class="ph"><span><b>自动驾驶定位</b> · 读图说明</span><span>三、隧道时序</span></div>
+
+  <h2><span class="n">03</span>32 秒没有 GNSS：断、接、重锁</h2>
+  <p>这张图有两条曲线：黑实线是融合后的误差，灰虚线是"假设第 22 秒没有地图匹配"。两条线在第 22 秒分岔——那就是全图的转折点。</p>
+
+  <figure>
+    <img src="./2026-11-自动驾驶定位-图3-隧道时序.png" alt="图 3 · 隧道时序">
+    <figcaption>图 3 · 误差曲线（对数轴）+ 五段相位 + 同一时间轴上的技术接力</figcaption>
+  </figure>
+
+  <ul class="pts">
+    <li><b>五个相位</b>：固定解（0–8 s）→ IMU 单独接力（8–13 s）→ 轮速 / DR（13–22 s）→ 点云 / 语义匹配（22–40 s）→ 重捕获（40–60 s）。</li>
+    <li><b>两条阈值线给"能用"下了定义</b>：0.3 m 是车道级可用上限，1 m 是定位失效线。黑线一次都没碰 0.3，灰线在第 36 秒撞上 1 m。</li>
+    <li><b>重锁不是切换，是融合</b>。曲线在 40 秒陡降，但不是某个模块"接管"，而是匹配帧把累积误差一次性拉回，所以是平滑回落，不是跳变。</li>
+  </ul>
+
+  <div class="note"><b>纵轴是对数的</b>，这点很关键：纯惯导误差随时间的平方增长，在对数轴上才既能看清 2 cm 的平段，又能看到 4 m 的失控段。画成线性轴，"前 5 秒不用管"这个节奏就丢了。</div>
+
+  <div class="pf"><span>自动驾驶定位 · 读图说明</span><span class="no">05</span></div>
+</section>
+
+<!-- ================= 图 4 ================= -->
+<section class="page">
+  <div class="ph"><span><b>自动驾驶定位</b> · 读图说明</span><span>四、坐标系与变换链</span></div>
+
+  <h2><span class="n">04</span>一个点从卫星走到像素</h2>
+  <p>五个系、四次变换。每个箭头旁边都标了"这个变换是谁给的"：一次性、每帧更新、出厂标定、内参——<b>变换的来源决定了它什么时候会变</b>。</p>
+
+  <figure>
+    <img src="./2026-11-自动驾驶定位-图4-坐标系变换链.png" alt="图 4 · 坐标系与变换链">
+    <figcaption>图 4 · 世界系 → 局部 ENU → 车体系 → 传感器系 → 像素系</figcaption>
+  </figure>
+
+  <ul class="pts">
+    <li><b>方向</b>：<code>T_AB</code> 把 A 系的点变到 B 系（<code>p_B = T_AB · p_A</code>）。反过来要整体求逆——旋转转置了，平移也得跟着换。</li>
+    <li><b>顺序</b>：<code>p_pix = K · T_cam_car · T_car_enu · p_enu</code>。从最外层往内乘，一层层剥回世界系；换序就等于换了一个物理含义。</li>
+    <li><b>三个隐形偏移</b>：外参方向、杆臂（GNSS 天线不在后轴中心）、时间戳。图纸上画不出来的，往往就是上车后对不齐的那几处。</li>
+  </ul>
+
+  <div class="note">中间那排是"同一个车道线角点在四个系里的四张脸"（数值为示意，量级是对的）。这张图最有用的地方不是那五个框，而是底部黑条的三问：<b>哪个系到哪个系？带时间戳吗？协方差是谁的？</b></div>
+
+  <div class="pf"><span>自动驾驶定位 · 读图说明</span><span class="no">06</span></div>
+</section>
+
+<!-- ================= 图 5 ================= -->
+<section class="page">
+  <div class="ph"><span><b>自动驾驶定位</b> · 读图说明</span><span>五、递推滤波与因子图</span></div>
+
+  <h2><span class="n">05</span>同一组测量，两种解法</h2>
+  <p>左边是个环，右边是张图。差别不在精度，在<b>能不能反悔</b>。</p>
+
+  <figure>
+    <img src="./2026-11-自动驾驶定位-图5-递推与因子图.png" alt="图 5 · 递推滤波与因子图">
+    <figcaption>图 5 · 左：预测—更新—输出—下一帧；右：节点 + 因子，回环就是加一条边</figcaption>
+  </figure>
+
+  <ul class="pts">
+    <li><b>递推只有一份状态</b>，每帧算完就翻篇。一次线性化错了，误差就留在里面，几乎无法回头改历史。</li>
+    <li><b>因子图把所有约束攒着一起解</b>，非线性强时可以反复线性化，逼近真正的极小点；回环重访只需要加一条边。</li>
+    <li><b>选型见表格最后一行</b>：车端实时选递推（EKF / ESKF），离线建图、后处理、标定优化选因子图。</li>
+  </ul>
+
+  <div class="note">一句话可以记住两者的关系：<b>ESKF 约等于"只有两帧的因子图"</b>——它把历史压缩进了协方差 P 里。理解这一点，"为什么要用因子图"就不需要再解释了。</div>
+
+  <div class="pf"><span>自动驾驶定位 · 读图说明</span><span class="no">07</span></div>
+</section>
+
+<!-- ================= 图 6 ================= -->
+<section class="page">
+  <div class="ph"><span><b>自动驾驶定位</b> · 读图说明</span><span>六、松耦合与紧耦合</span></div>
+
+  <h2><span class="n">06</span>GNSS 在哪一层进滤波器</h2>
+  <p>两幅图长得几乎一样，差别只有一处：交给滤波器的到底是<b>经纬度</b>，还是<b>伪距 / 多普勒 / 载波</b>。</p>
+
+  <figure>
+    <img src="./2026-11-自动驾驶定位-图6-松紧耦合.png" alt="图 6 · 松耦合与紧耦合">
+    <figcaption>图 6 · 上：松耦合（PVT 是输入）；下：紧耦合（原始观测直接进滤波器，PVT 被跳过）</figcaption>
+  </figure>
+
+  <ul class="pts">
+    <li><b>松耦合的 PVT 是个黑盒</b>：≥4 颗星才解得出，解不出就整段丢——全有或全无，切进去的瞬间还会跳一下。</li>
+    <li><b>紧耦合把解算搬进滤波器</b>：2–3 颗星也能贡献约束，逐颗降权，输出连续，也更容易解释。</li>
+    <li><b>代价是要拿原始观测</b>（接收机协议 / 授权），还要做天线相位中心、杆臂和时间对齐。工程量和调试难度都上一个台阶。</li>
+  </ul>
+
+  <div class="note">图里那个被打叉的"PVT 解算"框，说的不是"不需要解算"，而是<b>这一层被跳过了</b>：接收机内部照样解 PVT，只是它的输出不再进入融合。这一点最容易画错，也最容易讲错。</div>
+
+  <div class="pf"><span>自动驾驶定位 · 读图说明</span><span class="no">08</span></div>
+</section>
+
+<!-- ================= 图 7 ================= -->
+<section class="page">
+  <div class="ph"><span><b>自动驾驶定位</b> · 读图说明</span><span>七、高精地图三层</span></div>
+
+  <h2><span class="n">07</span>拓扑筛、语义对、几何压</h2>
+  <p>三层不是"三个文件"，是三种抽象级别：<b>拓扑管连通，语义管含义，几何管位置</b>。匹配时也按这个顺序，从粗到细。</p>
+
+  <figure>
+    <img src="./2026-11-自动驾驶定位-图7-地图三层.png" alt="图 7 · 高精地图三层">
+    <figcaption>图 7 · 左：三层各存什么、怎么用；右：从 200 条候选筛到厘米级的漏斗</figcaption>
+  </figure>
+
+  <ul class="pts">
+    <li><b>体量差三个数量级</b>：拓扑几十 KB/km，语义几百 KB/km，几何 GB/km 级。这也决定了更新频率——拓扑几乎不变，语义季度更新，几何按月。</li>
+    <li><b>匹配是从粗到细</b>：先用拓扑把 200 条候选车道筛到 5 条，再用语义（路牌、箭头）找锚点粗对齐，最后用几何（点云 ICP、车道线）压到 3–5 cm。</li>
+    <li><b>只用一层都不行</b>：只靠几何，等于在 200 条车道里盲配，慢且容易配错；只靠拓扑 + 语义，快但精度到不了车道级。</li>
+  </ul>
+
+  <div class="note">这张图回答的是图 1 里"高精地图匹配"那张卡：<b>匹配不是一个算法，是一个从粗到细的流程</b>。任何一步跳过，后面都会用算力去还债。</div>
+
+  <div class="pf"><span>自动驾驶定位 · 读图说明</span><span class="no">09</span></div>
+</section>
+
+<!-- ================= 图 8 ================= -->
+<section class="page">
+  <div class="ph"><span><b>自动驾驶定位</b> · 读图说明</span><span>八、置信度到下游</span></div>
+
+  <h2><span class="n">08</span>协方差要变成车速、车距和接管</h2>
+  <p>定位对外的产出不是 <code>(x, y)</code>，是 <code>(x, y, Σ)</code>。上面那条流水线说明它去哪：定位输出 → 完好性监测 → 降级状态机 → 规划约束 → 执行 / 接管。</p>
+
+  <figure>
+    <img src="./2026-11-自动驾驶定位-图8-置信度降级.png" alt="图 8 · 置信度降级">
+    <figcaption>图 8 · 四级降级（L0–L3）与"允许车速 vs σ"的阶梯（示意）</figcaption>
+  </figure>
+
+  <ul class="pts">
+    <li><b>四级降级有明确判据</b>：L0 正常（σ &lt; 0.1 m）→ L1 降级（0.1–0.5 m，收紧偏移、车距 ×1.5）→ L2 受限（0.5–2 m，限速 40、禁变道）→ L3 失效（&gt; 2 m，MRM 靠边停车）。</li>
+    <li><b>右侧阶梯图的数值不用记，形状要记住</b>：协方差每上一个台阶，规划就少一分自由——它是阶梯，不是斜坡。</li>
+    <li><b>判据不只靠 σ</b>，还要靠多源一致性和位置跳变检测。单看方差，会被一次平滑的错误估计骗过去。</li>
+  </ul>
+
+  <div class="note">这张图是"定位"和"决策规划"之间的接口图。看完它应该能回答一个问题：<b>如果定位飘了 50 cm，车会做什么？</b>——如果答不出来，说明降级策略还没定义。</div>
+
+  <div class="pf"><span>自动驾驶定位 · 读图说明</span><span class="no">10</span></div>
+</section>
+
+<!-- ================= 图 9 ================= -->
+<section class="page">
+  <div class="ph"><span><b>自动驾驶定位</b> · 读图说明</span><span>九、地库 AVP</span></div>
+
+  <h2><span class="n">09</span>UWB 的精度由锚点几何决定</h2>
+  <p>地库里没有 GNSS，靠 UWB + 点云。但 UWB 的精度<b>完全由锚点几何决定</b>（GDOP）——同一批硬件，布点不同，精度能差一个量级。</p>
+
+  <figure>
+    <img src="./2026-11-自动驾驶定位-图9-地库AVP.png" alt="图 9 · 地库 AVP">
+    <figcaption>图 9 · 平面布点示意：六个锚点、A / B / C 三个分区、点云退化区与切换区</figcaption>
+  </figure>
+
+  <ul class="pts">
+    <li><b>锚点共线、或全挤在车头一侧时，横向解算的方差会被放大</b>。四个角各一个，是底线配置；只有两个角，就别谈厘米级。</li>
+    <li><b>柱子和车身会挡住直射路径</b>：每个分区至少保证 3 个可见锚点，否则那一格只能靠点云；锚点挂高 2.5 m 以上，遮挡会小很多。</li>
+    <li><b>切换区要有一段重叠</b>：两套位姿差 &lt; 10 cm 且持续 1 s 才允许切换，切的时候别停。</li>
+  </ul>
+
+  <div class="note">图上的 A / B / C 标了"可见锚点 4 / 3 / 4"，这就是布点的验收标准：不是"有没有信号"，而是<b>每个分区够不够解算</b>。这张图的数值是示意的，验收逻辑是真的。</div>
+
+  <div class="pf"><span>自动驾驶定位 · 读图说明</span><span class="no">11</span></div>
+</section>
+
+<!-- ================= 收束 ================= -->
+<section class="page">
+  <div class="ph"><span><b>自动驾驶定位</b> · 读图说明</span><span>十、串起来读</span></div>
+
+  <h2><span class="n">10</span>把九张图串起来读</h2>
+  <p>一条主线：<b>图 1 说"有哪些手段"，图 2 说"怎么组织"，图 3 说"组织起来在时间上是什么样"</b>；图 4–7 是四张放大镜，图 8–9 是两张落地图。</p>
+
+  <table>
+    <thead><tr><th style="width:22%">层</th><th style="width:30%">图</th><th>它在回答什么</th></tr></thead>
+    <tbody>
+      <tr><td>全局</td><td>图 1 · 技术全景</td><td>信息来源有几类，各自的失效方式</td></tr>
+      <tr><td>结构</td><td>图 2 · 分层架构</td><td>怎么把它们排成四层，频率怎么对齐</td></tr>
+      <tr><td>时间</td><td>图 3 · 隧道时序</td><td>断掉以后，误差曲线长什么样</td></tr>
+      <tr><td>放大镜</td><td>图 4 · 坐标系</td><td>位姿在哪个系，变换怎么串</td></tr>
+      <tr><td>放大镜</td><td>图 5 · 滤波器</td><td>怎么解，能不能反悔</td></tr>
+      <tr><td>放大镜</td><td>图 6 · 耦合方式</td><td>数据在哪一层进来</td></tr>
+      <tr><td>放大镜</td><td>图 7 · 地图三层</td><td>拿什么对齐，从粗到细</td></tr>
+      <tr><td>落地</td><td>图 8 · 降级链</td><td>置信度怎么变成动作</td></tr>
+      <tr><td>落地</td><td>图 9 · 地库布点</td><td>没有 GNSS 时靠什么、怎么验收</td></tr>
+    </tbody>
+  </table>
+
+  <h3>画这九张图时守的三条规矩</h3>
+  <ul class="pts">
+    <li><b>别把"融合"画成并列的第五类技术。</b>它是横向的：图 1 里单独一列，是因为它不产生观测、只组合观测；图 2 里它是第三层，位置在"解算之后、输出之前"。</li>
+    <li><b>隧道图里误差不能画成直线。</b>纵轴是对数、横轴才是线性时间；纯惯导误差随时间的平方增长，画成直线就把"前 5 秒不用管、十几秒开始难看"的节奏丢了。</li>
+    <li><b>松耦合与紧耦合不是两条并行链路。</b>硬件、传感器、滤波器全一样，唯一变量是"交给滤波器的是解算结果还是原始观测"。两幅图的框子位置故意画成一样，就是为了让这个变量显眼。</li>
+  </ul>
+
+  <div class="quote">如果只记一句：<b>定位的产出是带方差的位姿，不是坐标。</b>少了那个 Σ，后面所有的降级、限速、接管都无从谈起。</div>
+
+  <div class="pf"><span>自动驾驶定位 · 读图说明</span><span class="no">12</span></div>
+</section>
+
+<!-- ================= 附录 ================= -->
+<section class="page">
+  <div class="ph"><span><b>自动驾驶定位</b> · 读图说明</span><span>十一、附：源文件</span></div>
+
+  <h2><span class="n">11</span>图片与可编辑源文件</h2>
+
+  <table>
+    <thead><tr><th style="width:46%">文件</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td><code>assets/…-图1-技术全景.png</code></td><td>图 1，3120×1742，2× 高清</td></tr>
+      <tr><td><code>assets/…-图2-分层架构.png</code></td><td>图 2，3120×1846</td></tr>
+      <tr><td><code>assets/…-图3-隧道时序.png</code></td><td>图 3，3120×1898</td></tr>
+      <tr><td><code>assets/…-图4-坐标系变换链.png</code></td><td>图 4，3120×1417</td></tr>
+      <tr><td><code>assets/…-图5-递推与因子图.png</code></td><td>图 5，3120×1508</td></tr>
+      <tr><td><code>assets/…-图6-松紧耦合.png</code></td><td>图 6，3120×1456</td></tr>
+      <tr><td><code>assets/…-图7-地图三层.png</code></td><td>图 7，3120×1456</td></tr>
+      <tr><td><code>assets/…-图8-置信度降级.png</code></td><td>图 8，3120×1534</td></tr>
+      <tr><td><code>assets/…-图9-地库AVP.png</code></td><td>图 9，3120×1508</td></tr>
+      <tr><td><code>assets/_make_localization.py</code></td><td>九张图的源文件（纯 Pillow 直绘，无浏览器依赖）</td></tr>
+      <tr><td><code>assets/_make_loc_note.html</code></td><td>本 PDF 的排版源文件</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:8.6pt;color:#64748b">※ 文件名前缀统一为 <code>2026-11-自动驾驶定位-</code>。</p>
+
+  <h3>重出九张图</h3>
+<pre>cd "assets"                          # 需已安装 Pillow
+python3 _make_localization.py .      # 覆盖输出九张 PNG</pre>
+
+  <h3>重出这份 PDF</h3>
+<pre>CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+"$CHROME" --headless=new --disable-gpu --no-pdf-header-footer \
+  --print-to-pdf="2026-11-自动驾驶定位-读图说明.pdf" \
+  "file://$PWD/assets/_make_loc_note.html"</pre>
+
+  <div class="note">图里的配色只有四组：<b>蓝＝绝对定位，绿＝相对定位，橙＝环境匹配，青＝融合</b>。九张图共用这一套，看到颜色就知道在说哪一类，不用每次重新认图例。</div>
+
+  <div class="pf"><span>自动驾驶定位 · 读图说明</span><span class="no">13</span></div>
+</section>
+
+</body>
+</html>

@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>算子图：从 PyTorch 到 TensorRT</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { background: #eef1f6; }
+  body {
+    font-family: "Songti SC", "Songti TC", "STSong", serif;
+    color: #1b2432; font-size: 10.4pt; line-height: 1.78;
+  }
+  .page {
+    width: 210mm; height: 297mm; background: #fff; position: relative;
+    padding: 15mm 17mm 16mm; page-break-after: always; overflow: hidden; margin: 0 auto;
+  }
+  .page:last-child { page-break-after: auto; }
+  @media screen { .page { box-shadow: 0 1px 6px rgba(15,23,42,.12); margin-bottom: 8mm; } }
+  @media print { html, body { background: #fff; } .page { box-shadow: none; margin: 0; } }
+
+  /* ---------- running head / foot ---------- */
+  .ph {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: "PingFang SC", sans-serif; font-size: 7.4pt; letter-spacing: .4px;
+    color: #94a3b8; border-bottom: .4pt solid #e5eaf2; padding-bottom: 2.2mm;
+  }
+  .ph b { color: #475569; font-weight: 600; }
+  .pf {
+    position: absolute; left: 17mm; right: 17mm; bottom: 8mm;
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: "PingFang SC", sans-serif; font-size: 7.2pt; color: #a3aec0;
+    border-top: .4pt solid #eef2f7; padding-top: 2mm;
+  }
+  .pf .no { font-family: Menlo, monospace; color: #64748b; letter-spacing: .5px; }
+
+  /* ---------- typography ---------- */
+  h2 {
+    font-family: "PingFang SC", sans-serif; font-size: 15pt; font-weight: 600;
+    letter-spacing: .3px; color: #0f172a; margin: 5mm 0 1.5mm;
+  }
+  h2 .n {
+    display: inline-block; font-family: Menlo, monospace; font-size: 8.6pt; font-weight: 700;
+    color: #1d4ed8; background: #eef4ff; border: .4pt solid #c7dafc; border-radius: 1mm;
+    padding: .6mm 1.5mm; margin-right: 2.6mm; vertical-align: 2pt; letter-spacing: .5px;
+  }
+  h3 {
+    font-family: "PingFang SC", sans-serif; font-size: 10.6pt; font-weight: 600;
+    color: #1e3a5f; margin: 4mm 0 1mm;
+  }
+  p { margin: 1.6mm 0; text-align: justify; }
+  .lead { color: #334155; }
+  b, strong { font-weight: 600; color: #0f172a; }
+  em { font-style: normal; background: linear-gradient(transparent 62%, #dbeafe 62%); padding: 0 .4mm; }
+  ul { margin: 1.6mm 0 1.6mm 5mm; }
+  li { margin: .9mm 0; }
+  .chk { list-style: none; margin-left: 0; font-family: "PingFang SC", sans-serif; font-size: 9pt; }
+  .chk li { padding-left: 6.4mm; text-indent: -6.4mm; }
+  .chk li::before { content: "□"; color: #94a3b8; margin-right: 2.2mm; }
+
+  /* ---------- table ---------- */
+  table { width: 100%; border-collapse: collapse; font-family: "PingFang SC", sans-serif;
+          font-size: 8.6pt; line-height: 1.6; margin: 2.4mm 0; }
+  th, td { border: .4pt solid #dbe3ee; padding: 1.7mm 2.2mm; vertical-align: top; text-align: left; }
+  thead th { background: #f5f8fc; color: #334155; font-weight: 600; }
+  tbody tr:nth-child(even) td { background: #fbfcfe; }
+  td.c, th.c { text-align: center; }
+  .tcap { font-family: "PingFang SC", sans-serif; font-size: 7.6pt; color: #94a3b8; margin-top: -1mm; }
+  .hl { background: #fef3ec !important; }
+
+  /* ---------- code / mono ---------- */
+  pre {
+    font-family: "SF Mono", Menlo, monospace; font-size: 7.8pt; line-height: 1.62;
+    background: #f7f9fc; border: .4pt solid #e3eaf3; border-left: 2.4pt solid #2563eb;
+    border-radius: 1mm; padding: 2.6mm 3.4mm; margin: 2.4mm 0; white-space: pre; color: #1e293b;
+    overflow: hidden;
+  }
+  code { font-family: "SF Mono", Menlo, monospace; font-size: 8.6pt; background: #f1f5f9;
+         padding: .2mm .8mm; border-radius: .8mm; }
+
+  /* ---------- callouts ---------- */
+  .note {
+    background: #f6f9fd; border: .4pt solid #dbe7f6; border-left: 2.6pt solid #0d9488;
+    border-radius: 1mm; padding: 2.6mm 3.4mm; margin: 2.6mm 0;
+    font-family: "PingFang SC", sans-serif; font-size: 8.8pt; line-height: 1.7;
+  }
+  .note .t { font-weight: 700; color: #0f766e; font-size: 8.4pt; letter-spacing: .5px; }
+  .quote {
+    font-family: "PingFang SC", sans-serif; font-size: 9pt; color: #334155;
+    background: #f8fafc; border: .4pt solid #e6edf6; border-radius: 1.2mm; padding: 3mm 4mm; margin: 2.6mm 0;
+  }
+  .quote b { color: #1d4ed8; }
+
+  /* ---------- cover ---------- */
+  .cover { padding: 20mm 20mm 16mm; }
+  .kicker { font-family: "PingFang SC", sans-serif; font-size: 8pt; letter-spacing: 2px; color: #2563eb; font-weight: 600; }
+  .cover h1 {
+    font-family: "PingFang SC", sans-serif; font-size: 27pt; font-weight: 700; line-height: 1.34;
+    letter-spacing: .4px; margin: 4mm 0 3mm; color: #0b1220;
+  }
+  .cover .sub { font-family: "PingFang SC", sans-serif; font-size: 11pt; color: #64748b; letter-spacing: .4px; }
+  .rule { height: 1.2pt; background: #0f172a; margin: 7mm 0 6mm; width: 32mm; }
+  .onesent { font-size: 10.2pt; line-height: 1.9; color: #24303f; }
+  .cover .meta {
+    position: absolute; left: 20mm; right: 20mm; bottom: 16mm; display: flex; justify-content: space-between;
+    font-family: "PingFang SC", sans-serif; font-size: 7.6pt; color: #94a3b8;
+    border-top: .4pt solid #e5eaf2; padding-top: 3mm;
+  }
+  .cover .figs { font-family: "PingFang SC", sans-serif; font-size: 8pt; color: #64748b; }
+
+  /* ---------- figure ---------- */
+  figure { margin: 2mm 0 3mm; }
+  figure img { width: 100%; display: block; border: .4pt solid #e2e8f0; border-radius: 1.2mm; }
+  figcaption { font-family: "PingFang SC", sans-serif; font-size: 7.8pt; color: #94a3b8; margin-top: 1.6mm; }
+  .bad, .good { font-family: "PingFang SC", sans-serif; font-size: 8.8pt; line-height: 1.66; padding: 2.4mm 3mm; border-radius: 1mm; }
+  .bad { background: #fef2f2; border: .4pt solid #fbd5d5; color: #7f1d1d; }
+  .good { background: #f0fdf4; border: .4pt solid #cdebd6; color: #14532d; }
+  .bad .m, .good .m { font-weight: 700; margin-right: 1.4mm; }
+
+  /* ---------- stats ---------- */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; margin: 2.6mm 0; }
+  .st { background: #0f172a; border-radius: 1.4mm; padding: 3.2mm 3.4mm; color: #fff;
+        font-family: "PingFang SC", sans-serif; }
+  .st .v { font-size: 16pt; font-weight: 700; letter-spacing: .3px; }
+  .st .l { font-size: 7.6pt; color: #94a3b8; margin-top: 1mm; line-height: 1.5; }
+
+  .dirs {
+    margin-top: 6mm; padding-top: 3mm; border-top: .4pt solid #e5eaf2;
+    display: grid; grid-template-columns: 1fr 1fr; column-gap: 12mm;
+    font-family: "PingFang SC", sans-serif; font-size: 8.2pt; color: #475569;
+  }
+  .dirs div { display: flex; align-items: baseline; gap: 2mm; padding: 1.1mm 0; }
+  .dirs span { font-family: Menlo, monospace; font-size: 7.4pt; color: #94a3b8; }
+  .dirs b { margin-left: auto; font-family: Menlo, monospace; font-size: 7.6pt;
+            color: #64748b; font-weight: 500; }
+
+  /* ---------- 收尾块 ---------- */
+  .ending {
+    margin-top: 12mm; padding: 7mm 8mm; background: #0f172a; border-radius: 2mm;
+    font-family: "PingFang SC", sans-serif; font-size: 10.2pt; line-height: 1.95; color: #cbd5e1;
+    letter-spacing: .2px;
+  }
+  .ending b { color: #fff; font-weight: 600; }
+
+  /* ---------- 三栏耦合点 ---------- */
+  .cp { font-family: "PingFang SC", sans-serif; font-size: 9pt; line-height: 1.7; margin: 2.4mm 0; }
+  .cp .h { font-weight: 700; color: #0f172a; font-size: 9.4pt; }
+  .cp .tag { display: inline-block; font-family: Menlo, monospace; font-size: 7.8pt; font-weight: 700;
+             color: #fff; background: #1d4ed8; border-radius: .8mm; padding: .3mm 1.4mm; margin-right: 1.8mm; }
+  .cp .tag.b { background: #0d9488; } .cp .tag.c { background: #be3e0a; }
+  .cp .io { color: #475569; }
+  .cp .io b { color: #1e3a5f; }
+</style>
+</head>
+<body>
+
+<!-- ============================ P1 封面 ============================ -->
+<section class="page cover">
+  <div class="kicker">模型格式 · 笔记 / 2026.11 · 计算图</div>
+  <h1>算子图：<br>从 PyTorch 到 TensorRT</h1>
+  <div class="sub">节点 · 边 · 地址 · 下发</div>
+  <div class="rule"></div>
+
+  <div class="onesent">
+    算子图就是一张表 —— <b>节点</b>说「算什么」，<b>边</b>说「传什么」，<b>属性</b>说「怎么算」，<b>地址</b>说「数据在哪」。
+    四种图（PyTorch 动态 / FX / ONNX / engine）的区别，本质是<b>这张表在什么时候被写死、写死到什么程度</b>。
+  </div>
+  <div class="onesent" style="margin-top:3mm; color:#475569;">
+    「这个模型有几个算子」这种问题，问哪一层都成立，<b>答案完全不同</b>。所以先把层次分清楚，再谈优化。
+  </div>
+
+  <h2 style="margin-top:9mm;"><span class="n">00</span>五张图与一句话</h2>
+  <table>
+    <thead><tr><th class="c" style="width:9%">图</th><th style="width:31%">回答的问题</th><th>一句话结论</th></tr></thead>
+    <tbody>
+      <tr><td class="c">图 1</td><td>「图」到底指哪一层</td><td>模块图 → 算子图 → kernel 图，三层不对应</td></tr>
+      <tr><td class="c">图 2</td><td>一张图里记了什么</td><td>节点、边、属性、地址，四种信息</td></tr>
+      <tr><td class="c">图 3</td><td>三种图差在哪</td><td>图被写死的时刻不同，可优化程度就不同</td></tr>
+      <tr><td class="c">图 4</td><td>数据在哪、怎么送去算</td><td>storage 与 view，四种下发方式</td></tr>
+      <tr><td class="c">图 5</td><td>这张表冻到了什么程度</td><td>结构先死、地址最晚死；逐格写死，不是进度条</td></tr>
+    </tbody>
+  </table>
+
+  <div class="figs" style="margin-top:2.6mm;">
+    配图：五张，均为 3120 px 宽、2× 超采样；文件名与本文同名，仅以 <code>-图N-标题</code> 区分。
+  </div>
+
+  <div class="dirs">
+    <div><span>01</span>什么叫「图」<b>2</b></div>
+    <div><span>02</span>三层：模块 / 算子 / kernel<b>3</b></div>
+    <div><span>03</span>图里记了什么<b>4</b></div>
+    <div><span>04</span>图怎么抓出来（上）<b>5</b></div>
+    <div><span>05</span>图怎么抓出来（下）<b>6</b></div>
+    <div><span>06</span>四种图 · 冻结程度<b>7</b></div>
+    <div><span>07</span>显存地址<b>9</b></div>
+    <div><span>08</span>下发与工具<b>10</b></div>
+    <div><span>09</span>误区与速记<b>11</b></div>
+  </div>
+
+  <div class="meta">
+    <span>nxcstudy_ai · 模型格式</span>
+    <span>共 11 页 · 配图 5 张</span>
+  </div>
+</section>
+
+<!-- ============================ P2 〇 + 一 ============================ -->
+<section class="page">
+  <div class="ph"><span>算子图 · 从动态图到 engine</span><span><b>01 · 02</b>　直觉与层次</span></div>
+
+  <h2><span class="n">01</span>先建立直觉：什么叫「图」</h2>
+
+  <p><code>y = relu(conv(x) + x)</code> 这一行代码，拆开就是四个算子、三条边：</p>
+
+<pre>x ──▶ conv2d ──▶ add ──▶ relu ──▶ y
+        ▲         │
+        └─────────┘   （x 也直接进 add，这就是残差）</pre>
+
+  <p>把算子当<b>节点</b>、把 tensor 当<b>边</b>，按依赖连起来，就得到一张<b>有向无环图（DAG）</b>。DFS 遍历一遍就是合法的执行顺序。</p>
+
+  <p><b>为什么要有图？</b>因为只有「图」这个形态，才能被整体分析：</p>
+
+  <table>
+    <thead><tr><th style="width:26%">想做的事</th><th class="c" style="width:14%">需要图吗</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td>算子融合</td><td class="c">是</td><td>得知道谁接谁，才能把 conv+bn+relu 合成一个</td></tr>
+      <tr><td>内存复用</td><td class="c">是</td><td>得知道每个 tensor 的生死区间（图上算得出来）</td></tr>
+      <tr><td>量化</td><td class="c">是</td><td>得逐层插量化 / 反量化节点</td></tr>
+      <tr><td>逐行调试</td><td class="c">否</td><td>eager 模式反而是优势</td></tr>
+    </tbody>
+  </table>
+
+  <p><b>这就是「动态图灵活、静态图能优化」的根本原因</b>：图存不存在，决定了优化器有没有东西可以分析。</p>
+
+  <h3>什么才算「一个算子」</h3>
+
+  <table>
+    <thead><tr><th style="width:26%">算子</th><th style="width:18%">典型来源</th><th style="width:16%">能不能融</th><th>为什么</th></tr></thead>
+    <tbody>
+      <tr><td>element-wise<br><code>relu</code> / <code>add</code></td><td>激活、残差</td><td><b>最容易</b></td><td>逐元素独立，能塞进上一个 kernel 的循环</td></tr>
+      <tr><td>conv / matmul</td><td>主干</td><td>常和 BN、bias 融</td><td>邻近的缩放与平移可以并进权重</td></tr>
+      <tr><td>reduction<br><code>softmax</code> / <code>sum</code></td><td>归一化</td><td>难</td><td>要跨元素汇总，中间结果必须落地</td></tr>
+      <tr><td>reshape / transpose</td><td>维度变换</td><td>不用融</td><td>多数只是元数据操作，本来就不搬数据</td></tr>
+    </tbody>
+  </table>
+  <div class="tcap">表 1　常见算子与它们的融合特性</div>
+
+  <p><b>为什么 element-wise 最容易融合？</b>因为它每个元素独立算，前后没有依赖，编译器可以把它的计算直接「塞进」上一个 kernel 的循环体里 —— 这就是 <code>conv+bn+relu</code> 能变成一个 kernel 的全部原因。</p>
+
+  <div class="note">
+    <span class="t">一个反直觉的推论</span><br>
+    模型里 element-wise 算子越多（残差、激活、归一化的逐元素部分），<b>融合的收益越大</b>。反过来，全是 reduction 的模型（比如大量 softmax），融合能做的事情就少得多。
+  </div>
+
+  <div class="pf"><span>2026.11 · 模型格式笔记</span><span class="no">02 / 11</span></div>
+</section>
+
+<!-- ============================ P3 二层 ============================ -->
+<section class="page">
+  <div class="ph"><span>算子图 · 从动态图到 engine</span><span><b>02</b>　三层</span></div>
+
+  <h2><span class="n">02</span>三层：模块图 / 算子图 / kernel 图</h2>
+
+  <figure>
+    <img src="2026-11-算子图-图1-三层视角.png" alt="图 1 · 三层视角">
+    <figcaption>图 1　三层视角：模块图 / 算子图 / kernel 图（3120 × 1469）</figcaption>
+  </figure>
+
+  <p>同一个模型，有三种完全不同的「图」，<b>很多人说的不是同一层</b>。</p>
+
+  <p><b>① 模块图</b>是对象树：<code>model.layer1[0].conv1</code>。它描述「有哪些零件」，不是「怎么算」。你 <code>print(model)</code> 看到的就是这一层。<br>
+  <b>② 算子图</b>是 <code>conv2d → bn → relu → conv2d → bn → add → relu</code>，每个节点带 shape、dtype、地址。<b>融合删的是这里，调优换的是这里，量化改的是这里。</b><br>
+  <b>③ kernel 图</b>是 GPU 上真跑的，融合后 7 个算子可能只剩 4 个 kernel。</p>
+
+  <div class="note">
+    <span class="t">三层不是一一对应</span><br>
+    一个模块节点会展开成几十个算子；反过来，几个算子又会被融成一个 kernel。所以「这个模型有多少个算子」，<b>问哪一层都成立，答案完全不同</b>。
+  </div>
+
+  <p><b>为什么会混？</b>因为你平时接触的三个工具分属不同层：<code>print(model)</code> 给的是模块图，<code>netron</code> 打开的是算子图，<code>nsys</code> 时间轴上看到的是 kernel 图。<b>同一个模型，三个工具给你三张完全不同的「图」。</b></p>
+
+  <div class="quote">
+    <b>一个判断技巧</b>：如果「图上有多少个框」这个问题的答案，在两次测量里不一样（比如 netron 里 7 个、trtexec 里 4 层），说明你看的是不同层 —— <b>不是谁错了，是问题本身没说清是哪一层</b>。
+  </div>
+
+  <div class="pf"><span>2026.11 · 模型格式笔记</span><span class="no">03 / 11</span></div>
+</section>
+
+<!-- ============================ P3 三 ============================ -->
+<section class="page">
+  <div class="ph"><span>算子图 · 从动态图到 engine</span><span><b>03</b>　图里记什么</span></div>
+
+  <h2><span class="n">03</span>一张算子图里到底记了什么</h2>
+
+  <figure>
+    <img src="2026-11-算子图-图2-节点与边.png" alt="图 2 · 节点与边">
+    <figcaption>图 2　解剖：节点记什么、边记什么（3120 × 1625）</figcaption>
+  </figure>
+
+  <p><b>节点记四件事</b>：op 类型（<code>aten::conv2d → Conv → IConvolutionLayer</code>）、属性（stride / padding / groups）、输入输出（带 shape、dtype、地址）、拓扑序。<b>属性不进显存</b>——它们是编译期固化进 kernel 的常量。</p>
+
+  <p><b>边就是 tensor，记五件事</b>：shape、dtype、layout、<b>地址</b>、<b>生命周期</b>。生命周期是内存复用的依据：<code>#12 产生 → #15 消费完</code>，之后这块地址就能给别的 tensor 用。</p>
+
+  <div class="note">
+    <span class="t">被融合掉的中间结果，根本没有地址</span><br>
+    它不是「地址被复用」，而是<b>压根不存在</b>——只在寄存器和 shared memory 里短暂停留。所以<b>省显存和省带宽是同一件事的两面</b>。
+  </div>
+
+  <h3>同一批信息，三种格式各叫什么</h3>
+
+  <table>
+    <thead><tr><th style="width:13%">这一项</th><th style="width:27%">PyTorch（FX）</th><th style="width:29%">ONNX（GraphProto）</th><th>TensorRT（engine）</th></tr></thead>
+    <tbody>
+      <tr><td>算子</td><td><code>node.op</code> / <code>node.target</code></td><td><code>node.op_type</code></td><td><code>ILayer</code>，<code>layer.type</code></td></tr>
+      <tr><td>参数</td><td><code>node.args</code> / <code>kwargs</code></td><td><code>node.attribute</code></td><td>builder 内部持有</td></tr>
+      <tr><td>输入输出</td><td><code>node.all_input_nodes</code></td><td><code>graph.input/output</code></td><td>I/O tensor（binding）</td></tr>
+      <tr><td>中间张量</td><td>只是 node 的输出引用</td><td><code>graph.value_info</code></td><td>内部隐式，不暴露</td></tr>
+      <tr><td>形状</td><td><code>node.meta['tensor_meta']</code></td><td><code>ValueInfoProto</code></td><td>profile 的 min/opt/max</td></tr>
+      <tr><td>怎么读</td><td><code>print_tabular()</code></td><td>netron / <code>onnx.load</code></td><td><code>--dumpLayerInfo</code></td></tr>
+    </tbody>
+  </table>
+  <div class="tcap">表 2　概念不变，换个格式名字全变 —— 排查问题时按这张表找字段</div>
+
+  <div class="pf"><span>2026.11 · 模型格式笔记</span><span class="no">04 / 11</span></div>
+</section>
+
+<!-- ============================ P4 三①② ============================ -->
+<section class="page">
+  <div class="ph"><span>算子图 · 从动态图到 engine</span><span><b>04</b>　怎么抓（上）</span></div>
+
+  <h2><span class="n">04</span>图是怎么「抓」出来的</h2>
+  <p class="lead">四类来源，从「没有图」到「图被改写」，复杂度递增。</p>
+
+  <h3>① Eager：根本没有持久的图</h3>
+  <p><code>y = model(x)</code> 逐行执行，执行完就没了。训练时 PyTorch 会顺手建一张 <b>autograd 图</b>（为了反向传播），但推理时 <code>torch.no_grad()</code> 连这个都关了。<b>所以 eager 模式下你没有图可看。</b></p>
+
+  <h3>② torch.fx：把 Python 代码「录」成图</h3>
+
+<pre>import torch, torch.fx as fx
+
+class Block(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv = torch.nn.Conv2d(3, 64, 3, padding=1)
+        self.bn   = torch.nn.BatchNorm2d(64)
+        self.relu = torch.nn.ReLU()
+
+    def forward(self, x):
+        return self.relu(self.bn(self.conv(x)))
+
+gm = fx.symbolic_trace(Block())
+print(gm.graph)</pre>
+
+  <p>输出就是这个模型的算子图：</p>
+
+<pre>graph():
+    %x    : [#users=1] = placeholder[target=x]
+    %conv : [#users=1] = call_module[target=conv](args = (%x,), kwargs = {})
+    %bn   : [#users=1] = call_module[target=bn](args = (%conv,), kwargs = {})
+    %relu : [#users=1] = call_module[target=relu](args = (%bn,), kwargs = {})
+    return relu</pre>
+
+  <p>想要表格版，用 <code>gm.graph.print_tabular()</code>，会打出 <code>opcode / name / target / args / kwargs</code> 五列。</p>
+
+  <p>注意 <code>call_module</code> 与 <code>call_function</code> 的区别：前者指向一个子模块（<code>target=conv</code>），后者直接指向函数（<code>target=torch.relu</code>）。<b>融合与改写通常按 <code>call_function</code> 做</b>，因为它的语义最明确。</p>
+
+  <div class="note">
+    <span class="t">FX 不只是「看」</span><br>
+    <code>GraphModule</code> 是<b>可执行</b>的 —— <code>gm(x)</code> 会按新图跑。所以它是<b>改写图的入口</b>：量化、算子替换、插桩，都从改这张图开始；遍历用 <code>gm.graph.nodes</code>，每个节点带 <code>op</code> / <code>target</code> / <code>args</code>。
+  </div>
+
+  <div class="note">
+    <span class="t">symbolic_trace 的限制</span><br>
+    它用一个假的 <code>Proxy</code> 跑一遍，遇到 <code>if x.sum() &gt; 0</code> 这种依赖真实数值的分支就没法录（叫 <b>graph break</b>）。<code>torch.compile</code> 的 Dynamo 就是来解决这个的。
+  </div>
+
+  <div class="pf"><span>2026.11 · 模型格式笔记</span><span class="no">05 / 11</span></div>
+</section>
+
+<!-- ============================ P5 三③④⑤ ============================ -->
+<section class="page">
+  <div class="ph"><span>算子图 · 从动态图到 engine</span><span><b>04</b>　怎么抓（下）</span></div>
+
+  <h3>③ torch.onnx.export：把图转成静态格式</h3>
+
+<pre>torch.onnx.export(model, dummy_input, "model.onnx",
+                  input_names=["x"], output_names=["y"],
+                  opset_version=17)</pre>
+
+  <p><b>它做的事</b>：跑一次 trace → 每个 PyTorch 算子 1:1 映射成 ONNX 算子 → 把形状写进 <code>value_info</code>。<br>
+  <b>它不做的事</b>：融合、kernel 选择、内存规划。<b>导出器的目标是「语义正确」，不是「性能好」。</b></p>
+
+  <h3>④ TensorRT：把图读进来再改写</h3>
+
+<pre>trtexec --onnx=model.onnx --fp16 \
+        --dumpLayerInfo --exportLayerInfo=layers.json \
+        --profilingVerbosity=detailed</pre>
+
+  <p><code>layers.json</code> 里能看到每个 layer 的类型、输入输出 tensor、精度、耗时。<b>这是唯一能看到「融合之后有几层」的办法</b>——图上是 7 个算子，这里剩 4 层，就说明融合生效了。</p>
+
+  <h3>⑤ 五种抓法的对比</h3>
+
+  <table>
+    <thead><tr><th style="width:26%">手段</th><th style="width:18%">要可 trace 吗</th><th style="width:18%">控制流</th><th>产物</th></tr></thead>
+    <tbody>
+      <tr><td><code>symbolic_trace</code></td><td>是</td><td>无（会断）</td><td>FX GraphModule</td></tr>
+      <tr><td><code>torch.export</code> / Dynamo</td><td>是（但更强）</td><td>部分（可导出为节点）</td><td>ExportedProgram</td></tr>
+      <tr><td><code>torch.onnx.export</code></td><td>是</td><td>弱</td><td><code>.onnx</code></td></tr>
+      <tr><td>TensorRT</td><td>吃 onnx</td><td>基本没有</td><td><code>.plan</code></td></tr>
+    </tbody>
+  </table>
+  <div class="tcap">表 3　抓图手段与它们的表达能力</div>
+
+  <p><b>选择顺序</b>：只想看看结构 → FX；要交付 → ONNX；要极致性能 → 交给 TensorRT。别反过来，<b>也别指望导出器替你优化</b>。</p>
+
+  <div class="pf"><span>2026.11 · 模型格式笔记</span><span class="no">06 / 11</span></div>
+</section>
+
+<!-- ============================ P6 四 ============================ -->
+<section class="page">
+  <div class="ph"><span>算子图 · 从动态图到 engine</span><span><b>06</b>　四种图</span></div>
+
+  <h2><span class="n">06</span>四种完全不同的「图」</h2>
+
+  <figure>
+    <img src="2026-11-算子图-图3-三种图.png" alt="图 3 · 三种图">
+    <figcaption>图 3　动态图 / 静态图 / 编译产物（3120 × 1274）</figcaption>
+  </figure>
+
+  <table>
+    <thead><tr><th style="width:13%"></th><th>PyTorch 动态图</th><th>FX 图</th><th>ONNX 静态图</th><th>TensorRT engine</th></tr></thead>
+    <tbody>
+      <tr><td><b>图何时定</b></td><td>每次 forward 现算</td><td>trace 那一刻</td><td>导出那一刻</td><td>build 那一刻，绑 GPU</td></tr>
+      <tr><td><b>形状</b></td><td>任意</td><td>可符号 <code>SymInt</code></td><td>写死 / <code>dynamic_axes</code></td><td>profile 区间</td></tr>
+      <tr><td><b>控制流</b></td><td>Python 原生</td><td>一断就退回 eager</td><td>只剩 If/Loop</td><td>基本只剩静态</td></tr>
+      <tr><td><b>能否优化</b></td><td>几乎不能</td><td>可整图改写</td><td>有限</td><td>全图重写</td></tr>
+      <tr><td><b>可读性</b></td><td>高（就是代码）</td><td>高（还是 Python）</td><td>高（netron）</td><td>低（二进制）</td></tr>
+      <tr><td><b>何时作废</b></td><td>——</td><td><code>graph break</code></td><td>改结构要重导</td><td>换卡 / 换版本 / 超 profile</td></tr>
+    </tbody>
+  </table>
+  <div class="tcap">表 4　四种图逐项对照</div>
+
+  <p>图 3 只画了三张，因为 <b>FX 不落地</b>——它是活在进程里的一张表，不产出文件、也不进交付链。一旦要「交出去」，它必然先变成 ONNX。</p>
+
+  <p><b>动态图</b>适合还没定型的模型：改一行立刻生效。代价是每次 forward 都要重走一遍 Python 解释器 + 算子派发。<br>
+  <b>FX</b> 适合<b>「被改写」</b>：它本身不是终点，而是编译器的工作台——<code>torch.compile</code>、量化、剪枝、图切分，都是「抓一张 FX 表 → 改它 → 再生成代码」。<br>
+  <b>ONNX</b>适合交付和交换：唯一「任何框架都能读」的格式，但它是<b>快照</b>，导完就固定。<br>
+  <b>engine</b>适合最终部署：图在编译期被彻底改写，运行时照着跑。代价是<b>它不认识「新东西」</b>——换卡、换 TRT 版本、超出 profile，都得重编。</p>
+
+  <div class="quote">
+    <b>动态图 → (FX) → ONNX → engine 是一条单向的路。</b>每走一步，图的「可读性」下降，「优化程度」上升。所以调试要往前站，优化要往后走。
+  </div>
+
+  <div class="pf"><span>2026.11 · 模型格式笔记</span><span class="no">07 / 11</span></div>
+</section>
+
+<!-- ============================ P8 冻结程度 ============================ -->
+<section class="page">
+  <div class="ph"><span>算子图 · 从动态图到 engine</span><span><b>06</b>　冻结程度</span></div>
+
+  <h2>逐格看：这四张表「冻」到了什么程度</h2>
+
+  <p class="lead">上一页问「图长什么样」，这一页只问一件事：<b>表里的每一格，是活的还是死的。</b>
+  灰＝运行时才知道，蓝＝只声明符号，绿＝编译期写死，橙＝被改写，白＝表里根本没这一项。</p>
+
+  <figure>
+    <img src="2026-11-算子图-图5-冻结程度.png" alt="图 5 · 冻结程度">
+    <figcaption>图 5　同一张表的四个快照：一格一格看「写死程度」（3120 × 2080）</figcaption>
+  </figure>
+
+  <h3>三种读法</h3>
+  <p><b>① 竖着看一列</b>——这种图冻到了什么程度：最左整列灰，最右整列绿，中间是过渡带。<br>
+  <b>② 横着看一行</b>——谁先死、谁后死：<b>结构最先死</b>（engine 里不是冻结，是<b>行被删掉</b>），<b>地址最晚死</b>（FX / ONNX 里整列空白），<b>实现死得最彻底</b>（ONNX 里连这一列都不存在）。<br>
+  <b>③ 别当进度条看</b>——写死是<b>逐格</b>的：FX 的 shape 比 ONNX 更活（<code>SymInt</code> 符号化），ONNX 的地址整列是空的。</p>
+
+  <h3>每冻一列，换来一类优化</h3>
+
+  <p>冻住<b>结构</b>才能融合；冻住<b>属性</b>才能常量折叠、stride 特化；冻住 <b>shape</b> 才能做全局内存规划（按活跃区间算地址复用）；冻住<b>地址</b>才有零拷贝和 CUDA Graph；冻住<b>实现</b>，CPU 才只发一次命令、GPU 一口气跑完。<b>写死的顺序，就是优化能上场的顺序。</b></p>
+
+  <div class="quote">
+    四张图不是四个档位，是<b>同一张表在四个时刻的快照</b>。每冻一列，换一类优化，也丢一类灵活性 —— 代价就是表 4 的最后一行。
+  </div>
+
+  <div class="pf"><span>2026.11 · 模型格式笔记</span><span class="no">08 / 11</span></div>
+</section>
+
+<!-- ============================ P7 五 ============================ -->
+<section class="page">
+  <div class="ph"><span>算子图 · 从动态图到 engine</span><span><b>07</b>　显存地址</span></div>
+
+  <h2><span class="n">07</span>显存地址：Tensor 到底在哪</h2>
+
+  <figure>
+    <img src="2026-11-算子图-图4-地址与下发.png" alt="图 4 · 地址与下发">
+    <figcaption>图 4　地址与下发：左半讲存储，右半讲调度（3120 × 1690）</figcaption>
+  </figure>
+
+  <h3>storage 与 view</h3>
+
+<pre>t = torch.randn(4, 8, device="cuda")   # 一块 storage
+v = t[1:3]                             # 一个 view，不新占显存
+
+t.data_ptr()              # 第一个元素的地址
+t.storage().data_ptr()    # 整块 storage 的起点
+t.storage_offset()        # 相对起点的偏移
+t.stride()                # 每维走一步跨多少元素</pre>
+
+  <p><code>v.data_ptr()</code> 不等于 <code>t.data_ptr()</code>，但 <code>v.storage().data_ptr()</code> 等于 <code>t.storage().data_ptr()</code>——<b>它们共用一块内存</b>。</p>
+
+  <p>这也是 <code>transpose</code> / <code>slice</code> 几乎不耗时的原因。代价是<b>不连续的 tensor 传给某些 kernel 会悄悄触发一次 copy</b>。</p>
+
+  <h3>内存池与地址复用</h3>
+
+  <p>PyTorch 不每次 <code>cudaMalloc</code>，而是维护一个<b>缓存分配器</b>：释放的块回池子，下次同尺寸直接复用（<b>t=1 的 y2 就拿到了 t=0 的 y1 的位置</b>）。<b>TensorRT 把这件事提前到编译期算好</b>，显存峰值就这么降下来。</p>
+
+  <div class="note">
+    <span class="t">零拷贝是什么意思</span><br>
+    <code>context.set_tensor_address("x", x.data_ptr())</code> 只是<b>告诉</b>引擎去哪儿读写，<b>不复制数据</b>。所以你必须自己保证这块内存在推理期间有效。
+  </div>
+
+  <div class="pf"><span>2026.11 · 模型格式笔记</span><span class="no">09 / 11</span></div>
+</section>
+
+<!-- ============================ P8 六 + 七 ============================ -->
+<section class="page">
+  <div class="ph"><span>算子图 · 从动态图到 engine</span><span><b>08</b>　下发与工具</span></div>
+
+  <h2><span class="n">08</span>图怎么「发送」到 GPU</h2>
+
+  <p>图在 CPU 上，算在 GPU 上，中间这一步是<b>下发</b>。四种方式，CPU 的参与程度依次降低。</p>
+
+  <table>
+    <thead><tr><th style="width:26%">方式</th><th>一次 forward 发生什么</th><th style="width:22%">CPU 开销</th></tr></thead>
+    <tbody>
+      <tr><td><b>Eager 逐算子</b></td><td>每个算子：派发 → 选 kernel → <code>cudaLaunchKernel</code></td><td>最大，kernel 间有缝隙</td></tr>
+      <tr><td><b>图执行器</b></td><td>先遍历整图排好序，再挨个 launch</td><td>省掉 Python 开销，仍是 N 次</td></tr>
+      <tr><td><b>TensorRT enqueue</b></td><td>一次 <code>execute_async_v3</code>，GPU 内部跑完 plan</td><td>只发一次命令</td></tr>
+      <tr><td><b>CUDA Graph replay</b></td><td>录制一次全部 launch，之后一键重放</td><td>几乎为零</td></tr>
+    </tbody>
+  </table>
+  <div class="tcap">表 5　四种下发方式</div>
+
+  <p><b>「整图执行」不等于「一次 kernel」。</b>ORT 的图执行器仍然是 N 次 launch，省的是 CPU 侧的 Python 和派发；<b>只有 TensorRT 的 enqueue 和 CUDA Graph 才真的做到「CPU 只发一次」</b>。</p>
+
+  <h3>CUDA Graph 的坑：地址被焊死</h3>
+
+<pre>g = torch.cuda.CUDAGraph()
+static_in = torch.empty_like(x)
+with torch.cuda.graph(g):
+    static_out = model(static_in)     # ← 此刻所有地址被记进图里
+
+for _ in range(100):
+    static_in.copy_(new_x)            # 必须 copy 进同一块
+    g.replay()                        # 否则 GPU 还去读旧地址</pre>
+
+  <p>capture 那一刻，每个 kernel 读写的地址被固化。replay 时喂一块新显存，GPU 照样去读旧地址——<b>不报错，结果静默错误</b>。这是 CUDA Graph 最难查的一类 bug。</p>
+
+  <h2><span class="n">09</span>把图「看」出来的工具</h2>
+
+  <table>
+    <thead><tr><th style="width:30%">想看什么</th><th style="width:38%">用什么</th><th>备注</th></tr></thead>
+    <tbody>
+      <tr><td>PyTorch 算子图</td><td><code>fx.symbolic_trace</code> + <code>print_tabular()</code></td><td>最快，控制流会断</td></tr>
+      <tr><td>ONNX 图长什么样</td><td>netron 拖进去</td><td>直观，能看 shape</td></tr>
+      <tr><td>ONNX 的 shape 对不对</td><td><code>onnx.shape_inference</code></td><td>补 <code>value_info</code></td></tr>
+      <tr><td>TRT 融合后几层</td><td><code>trtexec --dumpLayerInfo</code></td><td><b>唯一能看到融合结果</b></td></tr>
+      <tr><td>真正下发的 kernel</td><td><b>Nsight Systems</b></td><td>图上没有的，时间轴上有</td></tr>
+    </tbody>
+  </table>
+
+  <p><b>最后两行最容易被忽略</b>：图是「应该怎么算」，时间轴是「实际怎么算」。两者对不上时，说明发生了融合——<b>这正是验证优化有没有生效的地方</b>。</p>
+
+  <div class="pf"><span>2026.11 · 模型格式笔记</span><span class="no">10 / 11</span></div>
+</section>
+
+<!-- ============================ P9 十 + 十一 ============================ -->
+<section class="page">
+  <div class="ph"><span>算子图 · 从动态图到 engine</span><span><b>10</b>　误区与速记</span></div>
+
+  <h2><span class="n">10</span>五个常见误解</h2>
+
+  <table>
+    <thead><tr><th class="c" style="width:6%">#</th><th style="width:38%">误解</th><th>实际</th></tr></thead>
+    <tbody>
+      <tr><td class="c">1</td><td><code>print(model)</code> 是计算图</td><td>那是<b>模块树</b>，不是算子图</td></tr>
+      <tr><td class="c">2</td><td>eager 模式没有图</td><td>训练时有 autograd 图；推理时确实没有</td></tr>
+      <tr><td class="c">3</td><td>一个算子 = 一个 kernel</td><td>融合后多个算子共用一个 kernel</td></tr>
+      <tr><td class="c">4</td><td>图上的 tensor 都有地址</td><td>被融合掉的中间结果<b>没有地址</b></td></tr>
+      <tr><td class="c">5</td><td>整图执行 = 一次 kernel</td><td>ORT 仍是 N 次，只有 TRT/CUDA Graph 是一次</td></tr>
+    </tbody>
+  </table>
+
+  <h3>和已有笔记的关系</h3>
+  <p style="font-family:'PingFang SC',sans-serif;font-size:8.8pt;color:#475569;line-height:1.8;">
+    本文是「图」的解剖，其余是上下文：
+    <code>2026-11-推理加速技术路线全景</code>（上位视角：三堵墙、五条路）　|　
+    <code>2026-06-ONNX与TensorRT推理加速</code>（ONNX 与 TRT 的分工）　|　
+    <code>模型格式转换笔记</code>（binding / set_tensor_address 实操）　|　
+    <code>2026-09-PyTorch执行原理与torch.compile-CUDA-Graph-TensorRT</code>（下发细节）
+  </p>
+
+  <h2><span class="n">11</span>一页速记</h2>
+
+<pre>一张算子图 =  节点（算什么）
+            + 边（传什么：shape / dtype / layout / 地址 / 生命周期）
+            + 属性（怎么算：stride / padding / groups）
+            + 拓扑序（先算谁）
+
+三层      模块图（代码结构）→ 算子图（被优化）→ kernel 图（真执行）
+四张图    动态图（每次现算）→ FX（可改写的表）→ ONNX（导出固定）→ engine（编译改写）
+冻结      结构先死 → 属性 → shape → 地址最晚死 → 实现死得最彻底；每冻一列，换一类优化
+地址      storage 是实体，tensor 是视图；融合后中间结果没有地址
+下发      eager 逐个 launch → 图执行器排序 → TRT 一次 enqueue → Graph 一键 replay</pre>
+
+  <div class="ending">
+    如果只能记一句：<b>图是「应该怎么算」，地址是「数据在哪」，下发是「怎么送去算」</b>——<br>
+    三件事合起来才是「能跑」，而图，只是其中最容易被看见的那一层。
+  </div>
+
+  <div class="pf"><span>2026.11 · 模型格式笔记</span><span class="no">11 / 11</span></div>
+</section>
+
+<script>
+window.addEventListener('load', function () {
+  var out = [];
+  document.querySelectorAll('.page').forEach(function (p, i) {
+    var cs = getComputedStyle(p);
+    var pb = parseFloat(cs.paddingBottom);
+    var limit = p.getBoundingClientRect().bottom - pb;
+    var maxb = 0, who = '';
+    Array.prototype.forEach.call(p.children, function (c) {
+      if (c.classList.contains('pf') || c.tagName === 'SCRIPT') return;
+      var b = c.getBoundingClientRect().bottom;
+      if (b > maxb) { maxb = b; who = c.className || c.tagName; }
+    });
+    if (maxb > limit + 1) out.push('P' + (i + 1) + '(+' + Math.round(maxb - limit) + 'px,' + who + ')');
+  });
+  document.body.setAttribute('data-overflow', out.length ? out.join(' | ') : 'none');
+});
+</script>
+</body>
+</html>

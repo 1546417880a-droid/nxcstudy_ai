@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{width:1700px;background:#e8edf4;font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;color:#1f2937;-webkit-font-smoothing:antialiased}
+  .wrap{width:1700px;padding:34px 36px 30px}
+
+  .head{display:flex;justify-content:space-between;align-items:flex-start}
+  h1{font-size:31px;font-weight:700;letter-spacing:.4px;line-height:1.25}
+  h1 em{font-style:normal;color:#1d4ed8}
+  .sub{margin-top:9px;font-size:13.5px;color:#5b6779;line-height:1.65}
+  .badge{font-size:11.5px;color:#64748b;border:1px solid #cbd5e1;background:#fff;
+         border-radius:999px;padding:6px 13px;white-space:nowrap}
+
+  .legend{display:flex;gap:20px;align-items:center;font-size:12px;color:#475569;margin:14px 0 12px}
+  .lg{display:flex;align-items:center;gap:7px}
+  .sw{width:26px;height:11px;border-radius:3px}
+  .ln{width:26px;height:0;border-top:2px dashed #f59e0b}
+
+  .grid{display:grid;grid-template-columns:175px 175px 192px 24px 205px 226px 246px 318px;gap:8px}
+  .hd{height:46px;display:flex;align-items:center;padding:0 11px;border-radius:9px;
+      font-size:12.8px;font-weight:600;color:#ffffff;line-height:1.3;letter-spacing:.2px}
+  .hd.a{background:#334155}
+  .hd.b{background:#0f172a}
+  .hd.c{background:#1d4ed8;color:#f0f6ff}
+
+  .cell{background:#fff;border:1px solid #dce3ee;border-radius:9px;padding:9px 11px;
+        font-size:12.4px;line-height:1.52;color:#3f4b5f}
+  .cell b{display:block;font-size:13.4px;color:#0d1726;margin-bottom:4px;line-height:1.35;font-weight:600}
+  .cell .g{color:#66738a}
+  .cell .k{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:11.4px;color:#1e3a8a;
+           background:#eef3fc;border-radius:4px;padding:0 4px}
+
+  .cell.s1{border-left:3px solid #2563eb}
+  .cell.s2{border-left:3px solid #7c3aed}
+  .cell.s3{border-left:3px solid #0891b2}
+  .cell.s4{border-left:3px solid #059669}
+  .cell.s5{border-left:3px solid #d97706}
+  .cell.drv{border-left:3px solid #f59e0b}
+
+  .sp{position:relative}
+  .sp::before{content:"";position:absolute;left:50%;top:-8px;bottom:-8px;
+              border-left:2px dashed #f59e0b;opacity:.85}
+  .cutlbl{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+          writing-mode:vertical-rl;font-size:10.5px;letter-spacing:2.5px;color:#b45309;
+          background:#fff8ed;border:1px solid #fbbf24;border-radius:5px;
+          padding:9px 3px;z-index:6;white-space:nowrap}
+
+  /* 感知模块：整列合并 */
+  .big{grid-column:8;grid-row:2 / 7;display:flex;flex-direction:column;justify-content:center;
+       gap:11px;background:#f5f8ff;border:1px solid #c7d7f5;border-left:3px solid #1d4ed8;padding:14px 15px}
+  .big>b{font-size:16px;color:#0d1726}
+  .big>i{font-style:normal;font-size:12px;color:#66738a;margin-top:-6px}
+  .big .sec{font-size:12.3px;line-height:1.62;color:#3f4b5f}
+  .big .tag{display:inline-block;font-size:10.4px;background:#e3ecff;color:#1d4ed8;
+            border-radius:4px;padding:0 6px;margin-right:6px;font-weight:600}
+  .big .ex{color:#8a96a8;font-size:11.6px}
+  .big .out{background:#fff;border:1px dashed #9dbcf0;border-radius:7px;padding:8px 10px;font-size:12.3px;color:#1e3a8a;line-height:1.6}
+
+  .notes{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+  .n{background:#fff;border:1px solid #dce3ee;border-left:3px solid #94a3b8;
+     border-radius:9px;padding:10px 13px;font-size:12px;line-height:1.6;color:#4b5768}
+  .n b{display:block;font-size:12.6px;color:#0d1726;margin-bottom:3px}
+  .n i{font-style:normal;color:#1d4ed8}
+  .n.w1{border-left-color:#f59e0b}
+  .n.w2{border-left-color:#7c3aed}
+  .n.w3{border-left-color:#0891b2}
+  .n.w4{border-left-color:#059669}
+  .foot{margin-top:12px;font-size:11.5px;color:#7b8798;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="head">
+    <div>
+      <h1>从物理量到感知：<em>一条传感器数据的完整路径</em></h1>
+      <div class="sub">七段：传感器 → 接口 → 内核 → 驱动 → 对齐 → 派生 → 感知。前两段在硬件里，第三段在内核里，其余都在用户态；感知模块是终点，它吃多源、做融合、吐统一表示。</div>
+    </div>
+    <div class="badge">架构草图 · 未入库</div>
+  </div>
+
+  <div class="legend">
+    <div class="lg"><span class="sw" style="background:#334155"></span>硬件与线缆（①②）</div>
+    <div class="lg"><span class="sw" style="background:#0f172a"></span>内核态（③）</div>
+    <div class="lg"><span class="sw" style="background:#1d4ed8"></span>用户态（④ 之后）</div>
+    <div class="lg"><span class="ln"></span>syscall 边界</div>
+    <div class="lg" style="color:#94a3b8">虚线只出现一次；跨过去就再也没有特权层</div>
+  </div>
+
+  <div class="grid">
+
+    <div class="hd a">① 传感器（物理量）</div>
+    <div class="hd a">② 接口 / 物理层</div>
+    <div class="hd b">③ 域控接收 · 内核</div>
+    <div class="sp"></div>
+    <div class="hd c">④⑤ 驱动 / 适配</div>
+    <div class="hd c">对齐：TF + 预处理</div>
+    <div class="hd c">派生：多出来的数据</div>
+    <div class="hd c">感知模块</div>
+
+    <div class="cell s1"><b>激光雷达</b><span class="g">点云 10–30 万点/帧<br>10–20 Hz</span></div>
+    <div class="cell"><b>1000BASE-T1</b><span class="g">单对双绞线，1 Gbps</span></div>
+    <div class="cell"><b>netdev → socket</b><span class="g">内核收包，用户态取 UDP</span></div>
+    <div class="sp"></div>
+    <div class="cell drv"><b>解包 + 逐点打戳</b><span class="g">→ <span class="k">PointCloud2</span></span></div>
+    <div class="cell"><b>TF base_link ← lidar_link</b><span class="g">static 外参，只发一次<br>预处理：运动补偿</span></div>
+    <div class="cell"><b>几何派生</b><span class="g">range image、体素降采样</span></div>
+
+    <div class="cell s2"><b>相机 ×6–12</b><span class="g">1920×1080×3 ≈ 6 MB/帧<br>30 fps</span></div>
+    <div class="cell"><b>GMSL2 / FPD-Link III</b><span class="g">同轴，6–10 Gbps</span></div>
+    <div class="cell"><b>V4L2 + DMA</b><span class="g">ISP 也在内核 / 硬件，零拷贝</span></div>
+    <div class="sp"></div>
+    <div class="cell drv"><b>格式转换</b><span class="g">→ <span class="k">Image</span> / <span class="k">CompressedImage</span></span></div>
+    <div class="cell"><b>TF base_link ← camera_link</b><span class="g">static 外参，只发一次<br>预处理：去畸变、裁剪</span></div>
+    <div class="cell"><b>学习派生</b><span class="g">单目深度（相对尺度）、分割</span></div>
+
+    <div class="cell s3"><b>毫米波雷达</b><span class="g">目标列表 / 4D 点云<br>20 Hz</span></div>
+    <div class="cell"><b>CAN FD / 100BASE-T1</b><span class="g">按数据量二选一</span></div>
+    <div class="cell"><b>SocketCAN / netdev</b><span class="g">内核只给帧，不给语义</span></div>
+    <div class="sp"><div class="cutlbl">syscall</div></div>
+    <div class="cell drv"><b>DBC 解码</b><span class="g">信号语义常在中间件，不在驱动</span></div>
+    <div class="cell"><b>TF base_link ← radar_link</b><span class="g">static 外参<br>预处理：时间对齐</span></div>
+    <div class="cell"><b>规则派生</b><span class="g">跟踪、卡尔曼滤波</span></div>
+
+    <div class="cell s4"><b>IMU + GNSS</b><span class="g">100–1000 Hz，另有 PPS 秒脉冲</span></div>
+    <div class="cell"><b>SPI / UART / 以太网</b><span class="g">PPS 走 GPIO</span></div>
+    <div class="cell"><b>spidev / tty / PTP</b><span class="g">时间同步在这一层就打</span></div>
+    <div class="sp"></div>
+    <div class="cell drv"><b>解析</b><span class="g">→ <span class="k">Imu</span> / <span class="k">NavSatFix</span></span></div>
+    <div class="cell"><b>TF（动态）odom → base_link</b><span class="g">每帧变，由位姿估计给出<br>预处理：PTP 对时</span></div>
+    <div class="cell"><b>规则派生</b><span class="g">轮速 + IMU → 里程计</span></div>
+
+    <div class="cell s5"><b>轮速 · 转角 · 档位</b><span class="g">几字节，50–100 Hz</span></div>
+    <div class="cell"><b>CAN / LIN</b><span class="g">1 Mbit/s / 20 kbit/s</span></div>
+    <div class="cell"><b>SocketCAN</b><span class="g">一帧 8 字节 + ID</span></div>
+    <div class="sp"></div>
+    <div class="cell drv"><b>DBC → 物理量 → Topic</b><span class="g">这是第二次“解析”</span></div>
+    <div class="cell"><b>标定参数（不产生 TF）</b><span class="g">本行不产生变换，只被引用</span></div>
+    <div class="cell"><b>元数据</b><span class="g">车速、曲率、置信度</span></div>
+
+    <div class="big">
+      <b>感知模块</b>
+      <i>吃多源 · 做融合 · 吐统一表示</i>
+      <div class="sec"><span class="tag">输入</span>图像 · 点云 · 雷达目标 · 位姿 · 车速</div>
+      <div class="sec"><span class="tag">三步</span>时间同步 → 空间对齐 → 融合<br><span class="ex">前融合 / 后融合 / 特征级融合</span></div>
+      <div class="out">输出：<b style="display:inline;font-size:12.6px">统一特征表示</b><br>
+        BEV / 体素 / 柱体 / query<br>
+        <span class="ex">BEV 只是其中一种，不是终点</span></div>
+      <div class="sec"><span class="tag">下游</span>检测 · 跟踪 · 预测 · 规划</div>
+    </div>
+
+  </div>
+
+  <div class="notes">
+    <div class="n w1"><b>打戳纪律</b>时间戳必须在 ④ 打；派生量继承<i>输入采样时刻</i>，“推断完成时刻”只是 latency 字段，不是数据的时间。</div>
+    <div class="n w2"><b>图像不是刚体</b>相机侧发生的是<i>投影 / 采样</i>（view transform），不存在“把 6 MB 图像乘一个 4×4”。</div>
+    <div class="n w3"><b>统一表示只选一种</b>BEV / 体素 / 柱体都是选择；选定后<i>全局唯一定义</i>（ego 还是 world、分辨率、范围）。</div>
+    <div class="n w4"><b>派生 ≠ 增广</b>换表示 → 注入先验 → 融合独立源，<i>可信度依次降低</i>、代价依次升高。</div>
+  </div>
+
+  <div class="foot">
+    内核态与用户态之间只有一次 syscall 边界；驱动只翻译、不理解，融合与统一表示都在感知模块里完成。TF 树承担“外参只有一份”，派生节点承担“多下游不重复算”。
+  </div>
+
+</div>
+</body>
+</html>

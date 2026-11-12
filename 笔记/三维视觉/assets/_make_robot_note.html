@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>机器人二次开发 · 读图说明</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { background: #eef1f6; }
+  body { font-family: "Songti SC", "Songti TC", "STSong", serif; color: #1b2432; font-size: 10.2pt; line-height: 1.75; }
+  .page { width: 210mm; height: 297mm; background: #fff; position: relative; padding: 15mm 17mm 16mm; page-break-after: always; overflow: hidden; margin: 0 auto; }
+  .page:last-child { page-break-after: auto; }
+  @media screen { .page { box-shadow: 0 1px 6px rgba(15,23,42,.12); margin-bottom: 8mm; } }
+
+  .ph { display: flex; justify-content: space-between; align-items: baseline; font-family: "PingFang SC", sans-serif;
+        font-size: 7.4pt; letter-spacing: .4px; color: #94a3b8; border-bottom: .4pt solid #e5eaf2; padding-bottom: 2.2mm; }
+  .ph b { color: #475569; font-weight: 600; }
+  .pf { position: absolute; left: 17mm; right: 17mm; bottom: 8mm; display: flex; justify-content: space-between;
+        font-family: "PingFang SC", sans-serif; font-size: 7.2pt; color: #a3aec0; border-top: .4pt solid #eef2f7; padding-top: 2mm; }
+  .pf .no { font-family: Menlo, monospace; color: #64748b; }
+
+  h2 { font-family: "PingFang SC", sans-serif; font-size: 14.5pt; font-weight: 600; color: #0f172a; margin: 4mm 0 1.6mm; }
+  h2 .n { display: inline-block; font-family: Menlo, monospace; font-size: 8.4pt; font-weight: 700; color: #1d4ed8;
+          background: #eef4ff; border: .4pt solid #c7dafc; border-radius: 1mm; padding: .6mm 1.5mm; margin-right: 2.4mm; vertical-align: 2pt; }
+  h3 { font-family: "PingFang SC", sans-serif; font-size: 10.4pt; font-weight: 600; color: #1e3a5f; margin: 3.6mm 0 .8mm; }
+  p { margin: 1.5mm 0; text-align: justify; }
+  b { font-weight: 600; color: #0f172a; }
+  em { font-style: normal; background: linear-gradient(transparent 62%, #dbeafe 62%); padding: 0 .4mm; }
+
+  figure { margin: 1.6mm 0 2mm; }
+  figure img { width: 100%; display: block; border: .4pt solid #e2e8f0; border-radius: 1.2mm; }
+  figcaption { font-family: "PingFang SC", sans-serif; font-size: 7.6pt; color: #94a3b8; margin-top: 1.4mm; }
+
+  table { width: 100%; border-collapse: collapse; font-family: "PingFang SC", sans-serif; font-size: 8.4pt; line-height: 1.55; margin: 2mm 0; }
+  th, td { border: .4pt solid #dbe3ee; padding: 1.5mm 2mm; vertical-align: top; text-align: left; }
+  thead th { background: #f5f8fc; color: #334155; font-weight: 600; }
+  tbody tr:nth-child(even) td { background: #fbfcfe; }
+  td.c { text-align: center; }
+
+  ul { margin: 1.4mm 0 1.4mm 4.4mm; }
+  li { margin: .6mm 0; }
+  .pts { background: #f8fafc; border: .4pt solid #e6edf6; border-left: 2.4pt solid #2563eb; border-radius: 1mm; padding: 2.2mm 3.2mm 2.2mm 1mm; margin: 2mm 0; }
+  .pts li { font-family: "PingFang SC", sans-serif; font-size: 9pt; line-height: 1.6; margin: 1mm 0; }
+  .note { background: #f6f9fd; border: .4pt solid #dbe7f6; border-left: 2.6pt solid #0d9488; border-radius: 1mm;
+          padding: 2.4mm 3.2mm; margin: 2.2mm 0; font-family: "PingFang SC", sans-serif; font-size: 8.8pt; line-height: 1.65; }
+  .quote { font-family: "PingFang SC", sans-serif; font-size: 9pt; color: #334155; background: #f8fafc;
+           border: .4pt solid #e6edf6; border-radius: 1.2mm; padding: 2.8mm 4mm; margin: 2.4mm 0; }
+  .quote b { color: #1d4ed8; }
+  code { font-family: "SF Mono", Menlo, monospace; font-size: 8.6pt; background: #f1f5f9; padding: .2mm .8mm; border-radius: .8mm; }
+  pre { font-family: "SF Mono", Menlo, monospace; font-size: 7.8pt; line-height: 1.6; background: #f7f9fc;
+        border: .4pt solid #e3eaf3; border-left: 2.4pt solid #2563eb; border-radius: 1mm; padding: 2.2mm 3.2mm; margin: 2mm 0; white-space: pre; }
+  .loop-diagram { font-size: 8pt; line-height: 1.5; }
+
+  /* cover */
+  .cover { padding: 20mm 20mm 16mm; }
+  .kicker { font-family: "PingFang SC", sans-serif; font-size: 8pt; letter-spacing: 2px; color: #2563eb; font-weight: 600; }
+  .cover h1 { font-family: "PingFang SC", sans-serif; font-size: 28pt; font-weight: 700; line-height: 1.3; margin: 4mm 0 3mm; color: #0b1220; }
+  .cover .sub { font-family: "PingFang SC", sans-serif; font-size: 11pt; color: #64748b; letter-spacing: .3px; }
+  .rule { height: 1.2pt; background: #0f172a; margin: 6mm 0 5mm; width: 30mm; }
+  .cover .lead { font-size: 10pt; line-height: 1.9; color: #24303f; }
+  .dirs { margin-top: 12mm; padding-top: 3mm; border-top: .4pt solid #e5eaf2;
+          display: grid; grid-template-columns: 1fr 1fr; column-gap: 12mm;
+          font-family: "PingFang SC", sans-serif; font-size: 8.4pt; color: #475569; }
+  .dirs div { display: flex; align-items: baseline; gap: 2mm; padding: 1.4mm 0; }
+  .dirs span { font-family: Menlo, monospace; font-size: 7.4pt; color: #94a3b8; }
+  .dirs b { margin-left: auto; font-family: Menlo, monospace; font-size: 7.6pt; color: #64748b; font-weight: 500; }
+
+  .cover .meta { position: absolute; left: 20mm; right: 20mm; bottom: 16mm; display: flex; justify-content: space-between;
+                 font-family: "PingFang SC", sans-serif; font-size: 7.6pt; color: #94a3b8; border-top: .4pt solid #e5eaf2; padding-top: 3mm; }
+</style>
+</head>
+<body>
+
+<!-- ================= P1 封面 ================= -->
+<section class="page cover">
+  <div class="kicker">三维视觉 · 笔记 / 2026.11</div>
+  <h1>机器人二次开发<br>五张图读图说明</h1>
+  <div class="sub">从分层结构，到控制通道、安全仲裁、开放度与闭环</div>
+  <div class="rule"></div>
+
+  <div class="lead">
+    这套图回答一个具体问题：买一台四足机器人做二次开发，<b>我们的代码到底能碰到哪里、发出去的指令会不会被执行</b>。
+  </div>
+  <div class="lead" style="margin-top:3mm; color:#475569;">
+    顺序是：结构（图 1）→ 两种走法（图 2）→ 谁能否决（图 3）→ 哪层能改（图 4）→ 一圈怎么转（图 5）。
+    五张连起来看，就是一次从"下发目标"到"被避障打断"的完整经历。
+  </div>
+
+  <h2 style="margin-top:10mm;"><span class="n">00</span>五张图各回答什么</h2>
+  <table>
+    <thead><tr><th class="c" style="width:8%">图</th><th style="width:34%">回答的问题</th><th>一句话结论</th></tr></thead>
+    <tbody>
+      <tr><td class="c">1</td><td>我的代码停在哪一层</td><td>只有 01 / 02 两层能改，03 以下只能调用</td></tr>
+      <tr><td class="c">2</td><td>走高层还是底层</td><td>高层买"稳"，底层买"自由"，两者互斥</td></tr>
+      <tr><td class="c">3</td><td>我的指令会不会被执行</td><td>是"请求"，会被限幅、覆盖、拒绝</td></tr>
+      <tr><td class="c">4</td><td>哪一层我能改</td><td>越往下越封闭，判断标准是"谁负责"</td></tr>
+      <tr><td class="c">5</td><td>一圈怎么转起来</td><td>感知→决策→控制→执行→回传，20–100 ms</td></tr>
+    </tbody>
+  </table>
+
+  <div class="quote" style="margin-top:5mm;">
+    <b>一句话：</b>你写的是"请求"，厂家做的是"裁决 + 执行"。
+  </div>
+
+  <div class="dirs">
+    <div><span>01</span>图 1 · 分层链路<b>2</b></div>
+    <div><span>02</span>图 2 · 两条通道<b>3</b></div>
+    <div><span>03</span>图 3 · 安全仲裁<b>4</b></div>
+    <div><span>04</span>图 4 · 开放度<b>5</b></div>
+    <div><span>05</span>图 5 · 闭环<b>6</b></div>
+    <div><span>06</span>串讲：一次 30 秒<b>7</b></div>
+    <div><span>07</span>四个误区与术语<b>8</b></div>
+    <div><span>08</span>附录与重出命令<b>9</b></div>
+  </div>
+
+  <div class="meta"><span>nxcstudy_ai · 暂时未归纳 / 三维视觉</span><span>共 9 页 · 配图 5 张</span></div>
+</section>
+
+<!-- ================= P2 图 1 ================= -->
+<section class="page">
+  <div class="ph"><span>机器人二次开发 · 读图说明</span><span><b>图 1</b>　分层</span></div>
+  <h2><span class="n">01</span>分层链路：你的代码停在哪一层</h2>
+
+  <figure>
+    <img src="2026-11-机器人二次开发-图1-分层链路.png" alt="分层链路">
+    <figcaption>图 1　六层调用链路：应用 → 接口 → 厂家软件栈 → SDK → 总线 → 执行器（3120 × 1368）</figcaption>
+  </figure>
+
+  <p>红色虚线卡在第 2 层和第 3 层之间，这条线就是"你能改"与"你只能调"的分界。线以上全部由你写；线以下，代码、参数、固件都不在你手里。</p>
+  <p>这六层也不是抽象概念。换一台机器狗，01–02 基本照搬，03–05 全换 —— 所以判断一段代码"能不能复用"，看它落在哪一层就够了：落在应用层的能带走，落在接口层的要重写，落在 03 以下的带不走。</p>
+
+  <table>
+    <thead><tr><th style="width:30%">层</th><th>你在这里能做什么</th></tr></thead>
+    <tbody>
+      <tr><td>01 应用层</td><td>导航、决策、AI 节点 —— 完全由你写</td></tr>
+      <tr><td>02 接口层</td><td>选入口：<code>/cmd_vel</code> 或 <code>SportClient.Move()</code></td></tr>
+      <tr><td>03 厂家软件栈</td><td>只能被评估：运动服务、状态机、<b>安全仲裁</b></td></tr>
+      <tr><td>04 SDK</td><td>可调用：语义 API → 平台客户端 → 通信封装 → DDS → 硬件接口</td></tr>
+      <tr><td>05 总线与驱动</td><td>基本不可见：CAN / EtherCAT 关节指令帧</td></tr>
+      <tr><td>06 执行器</td><td>12 个关节电机 + IMU，状态沿虚线回传</td></tr>
+    </tbody>
+  </table>
+
+  <div class="pts">
+    <ul>
+      <li><b>改得动的只有 01 / 02。</b>03 以下的代码、参数、固件都不在你手里。</li>
+      <li><b>排障先看边界。</b>指令没生效，先判断是"没发出去"（01–02）还是"被压下了"（03）。</li>
+      <li><b>SDK 不是驱动。</b>它本身也是中间层，你调 <code>Move()</code>，它替你走完 04 层内部全部。</li>
+    </ul>
+  </div>
+
+  <div class="note"><b>为什么这样分层：</b>厂家把"能卖钱的稳定性"封装在 03–05，把"千变万化的业务"留给你。分层不是为了好看，而是为了出问题时能划清责任 —— 谁的层，谁负责。</div>
+
+  <div class="pf"><span>2026.11 · 三维视觉笔记</span><span class="no">02 / 09</span></div>
+</section>
+
+<!-- ================= P3 图 2 ================= -->
+<section class="page">
+  <div class="ph"><span>机器人二次开发 · 读图说明</span><span><b>图 2</b>　两条通道</span></div>
+  <h2><span class="n">02</span>两条通道：让厂家替你走，还是自己接管关节</h2>
+
+  <figure>
+    <img src="2026-11-机器人二次开发-图2-两条通道.png" alt="两条控制通道">
+    <figcaption>图 2　高层 Sport Mode（RPC）与底层 Low-Level（DDS）对比（3120 × 1280）</figcaption>
+  </figure>
+
+  <p>同一个 SDK 提供两种入口，选哪个决定了你承担多少责任：<b>通道 A</b> 说"往哪走、多快"，步态与平衡由厂家负责；<b>通道 B</b> 直接给每个关节力矩或位置，平衡得自己算。</p>
+
+  <table>
+    <thead><tr><th style="width:22%">对比项</th><th style="width:39%">A · 高层运动</th><th>B · 底层直控</th></tr></thead>
+    <tbody>
+      <tr><td>通信方式</td><td>RPC（<code>SportClient.Move</code>）</td><td>DDS 发布 <code>/lowcmd</code></td></tr>
+      <tr><td>频率</td><td>10–50 Hz，需周期重发</td><td>500–1000 Hz，掉帧就摔</td></tr>
+      <tr><td>你负责</td><td>去哪、多快</td><td>每个关节的 q / dq / τ / Kp / Kd</td></tr>
+      <tr><td>厂家负责</td><td>步态、落足点、姿态补偿</td><td>只剩安全与硬件</td></tr>
+      <tr><td>前提</td><td>站立且运动服务在运行</td><td><b>必须先关闭高层运动服务</b></td></tr>
+      <tr><td>适合</td><td>导航、跟随、巡检</td><td>强化学习、自定义步态</td></tr>
+    </tbody>
+  </table>
+
+  <h3>两者互斥，不是叠加</h3>
+  <p>同时开会打架：表现为抖动、指令被覆盖，或直接触发保护。从高层切到底层通常就三步：</p>
+  <ol style="margin-left:5mm; font-size:9.6pt;">
+    <li>停掉高层运动服务，并等状态机回到 <code>LOW_LEVEL</code>（没等到就发指令，会被丢弃）；</li>
+    <li>起 500 Hz 定时器，首帧发"当前关节位置 + 零速度"，先稳住再谈动作；</li>
+    <li>增益从小到大加（Kp 慢慢抬），每一步都确认机身姿态没有发散。</li>
+  </ol>
+
+  <div class="note"><b>怎么选：</b>能用高层就别用底层 —— 底层不是"更高级"，只是把平衡、限幅、异常处理的责任转移给了你。只有当你要的动作（跳跃、后空翻、自定义步态）高层表达不了时，才降到 500 Hz 自己接管。</div>
+
+  <div class="pf"><span>2026.11 · 三维视觉笔记</span><span class="no">03 / 09</span></div>
+</section>
+
+<!-- ================= P4 图 3 ================= -->
+<section class="page">
+  <div class="ph"><span>机器人二次开发 · 读图说明</span><span><b>图 3</b>　仲裁</span></div>
+  <h2><span class="n">03</span>安全仲裁：你发的是请求，不是命令</h2>
+
+  <figure>
+    <img src="2026-11-机器人二次开发-图3-安全仲裁.png" alt="安全仲裁">
+    <figcaption>图 3　一次"被覆盖"的时间线 t0–t4 与五级优先级（3120 × 1080）</figcaption>
+  </figure>
+
+  <p>图里画的是最容易让人困惑的场景：你发 0.5 m/s，机器人却只走了 0.1 m/s。中间发生了一次<b>覆盖</b> —— 仲裁器发现前方 0.3 m 有障碍，触发了避障策略。</p>
+
+  <table>
+    <thead><tr><th class="c" style="width:8%">时刻</th><th style="width:30%">发生什么</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td class="c">t0</td><td>你发 <code>/cmd_vel</code> 0.5 m/s</td><td>你以为马上会走</td></tr>
+      <tr><td class="c">t1</td><td>仲裁器采样</td><td>急停 / 遥控器 / 姿态角 / 避障距离 / 电量</td></tr>
+      <tr><td class="c">t2</td><td>裁决</td><td>前方 0.3 m 有障碍 → 触发避障 → <b>覆盖</b></td></tr>
+      <tr><td class="c">t3</td><td>实际下发</td><td>0.1 m/s（或直接停），电机只认这个</td></tr>
+      <tr><td class="c">t4</td><td>状态回传</td><td>你的程序才发现"没走那么快"</td></tr>
+    </tbody>
+  </table>
+
+  <h3>优先级阶梯与四种裁决</h3>
+  <p>物理急停 &gt; 遥控器/机身按键 &gt; 安全模块 &gt; 厂家运动服务 &gt; <b>你的请求（最低）</b>。裁决也不只有"执行/不执行"，而是四种：<b>采纳</b>（按你给的走）、<b>限幅</b>（0.5 压到 0.3）、<b>覆盖</b>（急停/避障）、<b>拒绝</b>（未站立/充电中/低电量）。</p>
+
+  <div class="pts">
+    <ul>
+      <li>调试时要同时看两样：<b>你发了什么</b>（<code>/cmd_vel</code>）与<b>它实际做了什么</b>（<code>/odom</code>、<code>/lowstate</code>）。</li>
+      <li>只盯自己的话题，会误以为是算法输了、参数错了，其实是被安全策略截断。</li>
+    </ul>
+  </div>
+
+  <div class="note"><b>怎么观测：</b>同时录制 <code>/cmd_vel</code> 与 <code>/odom</code>，把"请求速度"和"实际速度"画在一条时间轴上，被限幅的时刻一目了然。只看其中一条，永远只能猜。</div>
+
+  <p>还有一个副作用值得记住：仲裁是<b>无感</b>的 —— 它不会给你的节点返回一个"被拒绝"的错误码。所以你的程序在代码层面上永远"发送成功"，失败只体现在结果里。</p>
+
+  <div class="pf"><span>2026.11 · 三维视觉笔记</span><span class="no">04 / 09</span></div>
+</section>
+
+<!-- ================= P5 图 4 ================= -->
+<section class="page">
+  <div class="ph"><span>机器人二次开发 · 读图说明</span><span><b>图 4</b>　开放度</span></div>
+  <h2><span class="n">04</span>开放度矩阵：哪一层你能改</h2>
+
+  <figure>
+    <img src="2026-11-机器人二次开发-图4-开放度矩阵.png" alt="开放度矩阵">
+    <figcaption>图 4　六层 × 四列：谁维护、能改什么、怎么改、风险（3120 × 1168）</figcaption>
+  </figure>
+
+  <p>二次开发不是"什么都能改"，而是"在允许的接口上做对的事"。判断标准不是技术难不难，而是<b>出问题谁负责</b> —— 你的代码出错，厂家不背。</p>
+
+  <table>
+    <thead><tr><th style="width:18%">层级</th><th style="width:34%">你能改什么</th><th>限制 / 风险</th></tr></thead>
+    <tbody>
+      <tr><td>应用层</td><td>全部：导航、决策、规划、AI 策略</td><td>逻辑错会撞，但不会"改坏机器人"</td></tr>
+      <tr><td>接口层</td><td>话题名、QoS、频率、控制模式</td><td>QoS 不匹配、频率太低 → 指令被丢</td></tr>
+      <tr><td>运动服务</td><td>只能"请求"速度、姿态、模式</td><td>安全策略会限幅或覆盖</td></tr>
+      <tr><td>SDK</td><td>可用不可改（部分版本开源可读）</td><td>升级换代接口会变</td></tr>
+      <tr><td>驱动与总线</td><td>基本不可见：帧格式、周期、仲裁</td><td>自己接总线会失保修，且有安全风险</td></tr>
+      <tr><td>固件</td><td>不可改</td><td>刷错变砖，版本不匹配会连不上</td></tr>
+    </tbody>
+  </table>
+
+  <p>这张表还有第二个用处：评估风险。凡是落在"厂家"那一列的层，出问题只能等固件更新，你最多发个 issue；凡是落在"你"那一列的，出问题改一行代码就能验证。二次开发的自由度和排障速度，其实由这张表决定。</p>
+
+  <div class="note">
+    <b>实践建议：</b>业务逻辑全部压在应用层；接口层只做适配；永远留一条"回高层"的退路。排查顺序：没动 → 查应用层；动了但被压 → 查运动服务与安全；数据不对 → 查 SDK 版本。
+  </div>
+
+  <p>还有一个经常被忽略的边界：<b>保修</b>。拆机、刷第三方固件、自己往总线里发帧，多数厂家会直接判定失去保修；而这些动作恰好都在 04 层以下。所以"能不能改"里还有一条隐含规则：<b>改得越深，越没人替你兜底</b>。</p>
+
+  <div class="pf"><span>2026.11 · 三维视觉笔记</span><span class="no">05 / 09</span></div>
+</section>
+
+<!-- ================= P6 图 5 ================= -->
+<section class="page">
+  <div class="ph"><span>机器人二次开发 · 读图说明</span><span><b>图 5</b>　闭环</span></div>
+  <h2><span class="n">05</span>闭环：一圈怎么转起来</h2>
+
+  <figure>
+    <img src="2026-11-机器人二次开发-图5-闭环.png" alt="二次开发闭环">
+    <figcaption>图 5　感知 → 决策 → 控制 → 接收 → 仲裁与步态 → 硬件回传（3120 × 1120）</figcaption>
+  </figure>
+
+<pre class="loop-diagram">        ① 感知 ──→ ② 决策 ──→ ③ 控制
+          ↑                        │
+   数据上行(10–100 Hz)      指令下行(10–50 Hz)
+          │                        ↓
+        ⑥ 硬件 ←── ⑤ 仲裁+步态 ←── ④ 指令接收</pre>
+
+  <p>上半圈是你的代码：订阅 <code>/scan</code>、<code>/camera/image_raw</code>、<code>/imu/data</code>、<code>/odom</code>，跑 SLAM 与规划，再把速度意图发布出去。下半圈是厂家：接收请求、安全评估、逆运动学、关节轨迹，最后经 CAN 驱动电机。</p>
+
+  <div class="pts">
+    <ul>
+      <li><b>一圈 20–100 ms</b>：感知 10–30 Hz、决策 10–20 Hz、控制 10–50 Hz、底层 500–1000 Hz。</li>
+      <li><b>你管"去哪"</b>：算法问题，换机器人也能复用。</li>
+      <li><b>厂家管"怎么走"</b>：步态、平衡、急停，换品牌就得重学。</li>
+    </ul>
+  </div>
+
+  <div class="note"><b>闭环不稳的三种典型表现：</b>速度上不去（被限幅）、走 S 形（规划频率太低）、突然停住（安全触发）。它们分别对应图 3 的限幅、时序问题和覆盖，而不是三个独立的算法 bug。</div>
+
+  <div class="quote">
+    类比：油门方向盘是 <code>/cmd_vel</code>，仪表盘后视镜是订阅的话题；发动机怎么烧油、变速箱怎么换挡，你不用管。
+  </div>
+
+  <h3>三个时间尺度，别混在一起调</h3>
+  <p>闭环里有三层节奏：<b>20–100 ms</b> 是你的一圈（感知到指令），<b>1–2 ms</b> 是厂家的控制环（500–1000 Hz），<b>1 s 以上</b> 才是规划与行为层。把"走得不顺"归因到规划器，往往是因为控制环在 1 kHz 上已经在救场了 —— 你看到的是它救回来的结果，不是原因。</p>
+
+  <div class="pf"><span>2026.11 · 三维视觉笔记</span><span class="no">06 / 09</span></div>
+</section>
+
+<!-- ================= P7 串讲 ================= -->
+<section class="page">
+  <div class="ph"><span>机器人二次开发 · 读图说明</span><span><b>06</b>　串讲</span></div>
+  <h2><span class="n">06</span>把五张串起来：一次 30 秒的完整经历</h2>
+
+  <p>单看每一张都成立，但真正的理解发生在把它们连起来的时候。下面是一次"下达目标 → 被避障打断 → 绕行恢复"的完整过程。</p>
+
+  <table>
+    <thead><tr><th class="c" style="width:10%">时间</th><th style="width:56%">发生什么</th><th>对应</th></tr></thead>
+    <tbody>
+      <tr><td class="c">0.0 s</td><td>上位机下发目标点（Action 或自定义接口）</td><td>图 1 · 01</td></tr>
+      <tr><td class="c">0.1 s</td><td>规划器算出路径，开始发布 <code>/cmd_vel</code> 0.5 m/s</td><td>图 5 · ②③</td></tr>
+      <tr><td class="c">0.5 s</td><td>雷达在前方 0.8 m 发现行人</td><td>图 1 · 01</td></tr>
+      <tr><td class="c">0.55 s</td><td>仲裁器把速度限到 0.2 m/s</td><td>图 3 · t1–t3</td></tr>
+      <tr><td class="c">0.6 s</td><td>你的控制节点从 <code>/odom</code> 看到只有 0.2，但<b>不知道原因</b></td><td>图 3 · t4</td></tr>
+      <tr><td class="c">0.7 s</td><td>局部规划器重新绕行</td><td>图 5 · ②</td></tr>
+      <tr><td class="c">1.2 s</td><td>恢复 0.5 m/s，回到闭环</td><td>图 5</td></tr>
+    </tbody>
+  </table>
+
+  <div class="quote" style="margin-top:4mm;">
+    <b>结论：</b>闭环里其实有<b>两套决策</b> —— 你的规划，和厂家的仲裁。搞不清"是谁改了我的速度"，就会在调参时反复怀疑自己的算法。
+  </div>
+
+  <h3>两套决策的分工</h3>
+  <table>
+    <thead><tr><th style="width:26%">维度</th><th style="width:37%">你的决策（规划器）</th><th>厂家的决策（仲裁）</th></tr></thead>
+    <tbody>
+      <tr><td>关注点</td><td>去哪、怎么绕、多快合适</td><td>会不会撞、会不会摔、是否超限</td></tr>
+      <tr><td>时间尺度</td><td>10–20 Hz，可重规划</td><td>更高频，随时可介入</td></tr>
+      <tr><td>失败后果</td><td>走错路、绕远</td><td>碰撞、摔倒、损坏</td></tr>
+      <tr><td>谁有权</td><td>提议</td><td>否决</td></tr>
+    </tbody>
+  </table>
+
+  <h3>速度被改了，按这个顺序查</h3>
+  <ol style="margin-left:5mm; font-size:9.6pt;">
+    <li><b>先看有没有发出去</b>：<code>ros2 topic hz /cmd_vel</code>，频率掉到 1 Hz 以下，多半是控制节点卡了；</li>
+    <li><b>再看是不是被限幅</b>：把 <code>/cmd_vel</code> 与 <code>/odom</code> 对齐画图，若请求恒为 0.5、实际在 0.2 波动，就是仲裁在起作用；</li>
+    <li><b>最后才怀疑算法</b>：前两步都正常，速度仍不对，再去看规划器的输出与坐标系。</li>
+  </ol>
+
+  <h3>所以调参的正确顺序</h3>
+  <p>先确认链路通（话题有没有、频率对不对），再确认没被压制（仲裁有没有限幅），最后才调算法参数。反过来做，会把系统问题当成算法问题，越调越乱。</p>
+
+  <div class="pf"><span>2026.11 · 三维视觉笔记</span><span class="no">07 / 09</span></div>
+</section>
+
+<!-- ================= P8 误区 + 术语 ================= -->
+<section class="page">
+  <div class="ph"><span>机器人二次开发 · 读图说明</span><span><b>07</b>　误区与术语</span></div>
+  <h2><span class="n">07</span>四个常见误区</h2>
+
+  <table>
+    <thead><tr><th class="c" style="width:6%">#</th><th style="width:38%">误区</th><th>实际情况</th></tr></thead>
+    <tbody>
+      <tr><td class="c">1</td><td>发了 <code>/cmd_vel</code> 就一定按这个速度走</td><td>它是请求，会被限幅或覆盖（图 3）</td></tr>
+      <tr><td class="c">2</td><td>SDK 就是"驱动"</td><td>它也是中间层，真正的 CAN 帧你看不到（图 1）</td></tr>
+      <tr><td class="c">3</td><td>底层控制更"高级"</td><td>只是把责任转移给你：摔了算你的（图 2）</td></tr>
+      <tr><td class="c">4</td><td>换品牌只要换话题名</td><td>步态、安全策略、状态机完全不同（图 4）</td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="n">08</span>术语速查</h2>
+  <table>
+    <thead><tr><th style="width:22%">词</th><th>在这里指什么</th></tr></thead>
+    <tbody>
+      <tr><td>DDS</td><td>分布式发布订阅中间件，ROS 2 的通信底座</td></tr>
+      <tr><td>RPC</td><td>远程过程调用，高层运动服务用它"点一下、执行一次"</td></tr>
+      <tr><td>QoS</td><td>话题的可靠性 / 队列策略；不匹配会收不到数据</td></tr>
+      <tr><td>Sport Mode</td><td>厂家封装的高层运动模式，管步态与平衡</td></tr>
+      <tr><td>LowCmd</td><td>底层控制消息，逐关节给位置 / 速度 / 力矩</td></tr>
+      <tr><td>仲裁</td><td>把多个控制源按优先级合成一个实际输出</td></tr>
+      <tr><td>逆运动学</td><td>从"脚落在哪"反解出"各关节转多少"</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    <b>还有什么没画：</b>多机协同、SLAM 与地图这一侧、以及不同厂家（宇树 / 波士顿动力 / 云深处）的接口差异。这三块都在"应用层"之外，属于下一组图。
+  </div>
+
+  <p>如果只记一件事：<b>先把"请求"和"结果"分开看</b>。请求是你代码的输出，结果是你算法的输入；两者之间的差额，就是厂家系统的全部工作（步态、平衡、安全）。能把这个差额说清楚，才算真正理解了二次开发。</p>
+
+  <div class="quote" style="margin-top:4mm;">
+    <b>三句话总结：</b>① 你写的是请求，不是命令；② 能力边界在 01/02 层，03 以下只能调用；③ 闭环里始终有两套决策，调试时先分清是谁改的，再改自己的代码。
+  </div>
+
+  <div class="pf"><span>2026.11 · 三维视觉笔记</span><span class="no">08 / 09</span></div>
+</section>
+
+<!-- ================= P9 附录 ================= -->
+<section class="page">
+  <div class="ph"><span>机器人二次开发 · 读图说明</span><span><b>09</b>　附录</span></div>
+  <h2><span class="n">09</span>附：图片与源文件</h2>
+
+  <table>
+    <thead><tr><th style="width:52%">文件</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td><code>assets/2026-11-机器人二次开发-图1-分层链路.png</code></td><td>3120 × 1368，回答"你在哪一层"</td></tr>
+      <tr><td><code>assets/2026-11-机器人二次开发-图2-两条通道.png</code></td><td>3120 × 1280，高层 / 底层两条路</td></tr>
+      <tr><td><code>assets/2026-11-机器人二次开发-图3-安全仲裁.png</code></td><td>3120 × 1080，时间线与优先级</td></tr>
+      <tr><td><code>assets/2026-11-机器人二次开发-图4-开放度矩阵.png</code></td><td>3120 × 1168，六层开放度</td></tr>
+      <tr><td><code>assets/2026-11-机器人二次开发-图5-闭环.png</code></td><td>3120 × 1120，感知到执行再回传</td></tr>
+      <tr><td><code>assets/_make_robot_note.html</code></td><td>本 PDF 的排版源文件</td></tr>
+      <tr><td><code>2026-11-机器人二次开发.md</code></td><td>Markdown 版，便于检索摘抄</td></tr>
+    </tbody>
+  </table>
+
+  <h3>重出 PDF</h3>
+<pre>CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+cd "三维视觉"        # 本笔记所在目录
+"$CHROME" --headless=new --disable-gpu --no-pdf-header-footer \
+  --print-to-pdf="2026-11-机器人二次开发.pdf" \
+  "file://$PWD/assets/_make_robot_note.html"</pre>
+
+  <h3>关于本文档</h3>
+  <p>正文用宋体排 10.2pt / 1.75 倍行距，标题与表格用苹方；A4 满版，每页固定页眉页脚与页码。五张图按"结构 → 通道 → 仲裁 → 权限 → 闭环"的顺序排列，最后一页串讲把它们连成一次真实的 30 秒。</p>
+  <p>内容与 Markdown 版一致，区别只在阅读体验：<b>Markdown 适合检索与摘抄，PDF 适合从头读到尾</b>。</p>
+
+  <h3>下一步可以补的三张图</h3>
+  <ul style="font-size:9.6pt;">
+    <li><b>多机协同</b>：两个机器人共用一个空间时，话题命名、坐标系、避障责任怎么划；</li>
+    <li><b>建图与定位侧</b>：SLAM 的输出如何反哺规划，地图坐标系怎么与机器人本体对齐；</li>
+    <li><b>跨厂家对比</b>：宇树 / 波士顿动力 / 云深处的接口差异，哪些能抽象成通用层。</li>
+  </ul>
+
+  <div class="pf"><span>2026.11 · 三维视觉笔记</span><span class="no">09 / 09</span></div>
+</section>
+
+<pre id="dbg" style="display:none"></pre>
+<script>
+window.addEventListener('load', function () {
+  var out = [];
+  document.querySelectorAll('.page').forEach(function (p, i) {
+    var pr = p.getBoundingClientRect(), maxBottom = 0;
+    Array.prototype.forEach.call(p.children, function (c) {
+      if (c.classList.contains('pf') || c.id === 'dbg') return;
+      var r = c.getBoundingClientRect();
+      if (r.bottom - pr.top > maxBottom) maxBottom = r.bottom - pr.top;
+    });
+    var limit = p.clientHeight - 45;
+    out.push((i+1) + ':' + (maxBottom > limit ? 'TIGHT +' + Math.round(maxBottom-limit) : 'ok') + '(' + Math.round(maxBottom) + '/' + Math.round(limit) + ')');
+  });
+  document.getElementById('dbg').textContent = out.join(' | ');
+});
+</script>
+</body>
+</html>
